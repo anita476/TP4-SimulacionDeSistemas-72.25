@@ -79,7 +79,6 @@ __pycache__
 
 # Dumps del motor y animaciones
 data/
-*.txt
 !python/requirements.txt
 !configs/*.txt
 *.gif
