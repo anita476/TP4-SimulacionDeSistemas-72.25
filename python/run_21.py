@@ -15,7 +15,7 @@ from traj import read_traj
 
 EXE = ROOT / "build-local" / "TimeDrivenSim.exe"
 TP3_EXE = ROOT.parent / "TP3-SimulacionDeSistemas-72.25" / "build-local" / "EventDrivenSim.exe"
-FIGS = ROOT / "data" / "2.1"
+FIGS = ROOT / "docs" / "results" / "2.1"
 WORK = Path(os.environ.get("TEMP", "/tmp")) / "tp4_21_consigna"
 OUT = WORK
 

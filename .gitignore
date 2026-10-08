@@ -86,6 +86,7 @@ data/*.png
 *.webp
 !docs/results/**/*.png
 !docs/results/**/*.txt
+!docs/results/**/*.gif
 .vscode/c_cpp_properties.json
 
 # latex 

@@ -11,8 +11,8 @@ from metrics import mean_std, t90_of_nu
 from traj import read_nu_series
 
 EXE = ROOT / "build-local" / "TimeDrivenSim.exe"
-DT_FILE = ROOT / "data" / "2.1" / "dt.txt"
-FIGS = ROOT / "data" / "2.2"
+DT_FILE = ROOT / "docs" / "results" / "2.1" / "dt.txt"
+FIGS = ROOT / "docs" / "results" / "2.2"
 WORK = Path(os.environ.get("TEMP", "/tmp")) / "tp4_22_consigna"
 OUT = WORK
 
