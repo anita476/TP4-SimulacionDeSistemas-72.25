@@ -5,12 +5,16 @@ def nu90(N: int) -> int:
     return -(-9 * N // 10)
 
 
-def t90_or_none(traj: Traj) -> float | None:
-    target = nu90(traj.N)
-    for frame in traj.frames:
-        if frame.nu >= target:
-            return frame.t
+def t90_of_nu(N: int, series: list[tuple[float, int]]) -> float | None:
+    target = nu90(N)
+    for t, nu in series:
+        if nu >= target:
+            return t
     return None
+
+
+def t90_or_none(traj: Traj) -> float | None:
+    return t90_of_nu(traj.N, [(frame.t, frame.nu) for frame in traj.frames])
 
 
 def t90(traj: Traj) -> float:

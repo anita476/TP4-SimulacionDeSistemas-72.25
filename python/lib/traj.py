@@ -119,3 +119,61 @@ def read_traj(path: str | Path) -> Traj:
         m=header.get("m"),
         k=header.get("k"),
     )
+
+
+def read_nu_series(path: str | Path) -> tuple[int, list[tuple[float, int]]]:
+    path_s = str(path)
+    N: int | None = None
+    frames: list[tuple[float, int]] = []
+    in_header = True
+    lineno = 0
+    with open(path, encoding="utf-8") as fh:
+        while True:
+            raw = fh.readline()
+            if not raw:
+                break
+            lineno += 1
+            line = raw.split("#", 1)[0].strip()
+            if not line:
+                continue
+            if in_header:
+                tag = line.split()[0]
+                if tag == "t":
+                    if N is None:
+                        raise ValueError(f"{path_s}: missing header field N")
+                    in_header = False
+                elif tag == "N":
+                    N = int(_tokens(path_s, lineno, line, 2)[1])
+                    if N < 1:
+                        raise ValueError(f"{path_s}: N must be >= 1, got {N}")
+                    continue
+                elif tag in ("R", "r", "m", "k"):
+                    _tokens(path_s, lineno, line, 2)
+                    continue
+                elif tag == "O":
+                    _tokens(path_s, lineno, line, 4)
+                    continue
+                else:
+                    _fail(path_s, lineno, f"unknown header tag {tag!r}")
+            if not in_header:
+                parts = _tokens(path_s, lineno, line, 4)
+                if parts[0] != "t" or parts[2] != "Nu":
+                    _fail(path_s, lineno, f"expected 't <s> Nu <int>', got {line!r}")
+                t, nu = float(parts[1]), int(parts[3])
+                if not (0 <= nu <= N):
+                    _fail(path_s, lineno, f"Nu={nu} is outside [0, {N}]")
+                skipped = 0
+                while skipped < N:
+                    particle = fh.readline()
+                    if not particle:
+                        raise ValueError(f"{path_s}: truncated frame at t={t}")
+                    lineno += 1
+                    if not particle.split("#", 1)[0].strip():
+                        continue
+                    skipped += 1
+                frames.append((t, nu))
+    if N is None:
+        raise ValueError(f"{path_s}: missing header field N")
+    if not frames:
+        raise ValueError(f"{path_s}: no frames")
+    return N, frames
