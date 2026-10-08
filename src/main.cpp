@@ -46,6 +46,10 @@ int main(int argc, char *argv[]) {
 	program.add_argument("-dt").scan<'g', double>().help("time step (s); requires -tf and -n");
 	program.add_argument("-tf").scan<'g', double>().help("final time (s); requires -dt and -n");
 	program.add_argument("-n").scan<'i', int>().help("save every n steps (dt2 = n dt); requires -dt and -tf");
+	program.add_argument("-init")
+	    .default_value(std::string("random"))
+	    .choices("random", "hex")
+	    .help("initial positions: random or hex");
 	program.add_argument("--out").default_value(std::string("")).help("dump path (empty = no dump)");
 
 	try {
@@ -107,13 +111,14 @@ int main(int argc, char *argv[]) {
 		gen.v0 = v0;
 		gen.obstacles = obstacles;
 		gen.seed = static_cast<std::uint64_t>(seed);
+		gen.placement = program.get<std::string>("-init") == "hex" ? Placement::Hex : Placement::Random;
 
 		std::vector<Particle> particles = generate_particles(gen);
 
 		std::ofstream file;
 		if (!out_path.empty()) {
 			file = open_dump(out_path);
-			write_dump_header(file, R, r, m, N, obstacles);
+			write_dump_header(file, R, r, m, spring_k, N, obstacles);
 			if (!file)
 				throw std::runtime_error("error writing " + out_path);
 		}

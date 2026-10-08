@@ -6,6 +6,8 @@
 #include "obstacle.hpp"
 #include "particle.hpp"
 
+constexpr double spring_k = 1.0e4;
+
 struct BilliardRun {
 	double R;
 	double dt;

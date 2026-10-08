@@ -6,6 +6,8 @@
 #include "obstacle.hpp"
 #include "particle.hpp"
 
+enum class Placement { Random, Hex };
+
 struct GeneratorConfig {
 	int N = 100;
 	double R = 0.51;
@@ -13,6 +15,7 @@ struct GeneratorConfig {
 	std::vector<Obstacle> obstacles;
 	std::uint64_t seed = 0;
 	int max_attempts = 100000;
+	Placement placement = Placement::Random;
 };
 
 double packing_fraction(const GeneratorConfig &cfg);

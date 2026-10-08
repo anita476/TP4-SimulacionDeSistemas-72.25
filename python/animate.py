@@ -18,15 +18,15 @@ MP4_DPI = 120
 ARROW_SCALE = 0.06
 
 
-def _stats_line(frame: Frame, n: int) -> str:
-    return rf"$N_u = {frame.nu}$    $F_u = {frame.nu / n:.2f}$"
+def _stats_line(frame: Frame, N: int) -> str:
+    return rf"$N_u = {frame.nu}$    $F_u = {frame.nu / N:.2f}$"
 
 
 def make_figure(traj: Traj, arrows: bool = False):
     apply_academic_style()
     import matplotlib.pyplot as plt
 
-    R, r, n = traj.R, traj.r, traj.n
+    R, r, N = traj.R, traj.r, traj.N
     margin = max(0.08 * R, 2.0 * r)
     fig = plt.figure(figsize=(8.0, 8.6))
     ax = fig.add_axes([0.14, 0.16, 0.78, 0.74])
@@ -93,7 +93,7 @@ def make_figure(traj: Traj, arrows: bool = False):
             fancybox=False,
         )
 
-    stats = fig.text(0.5, 0.975, _stats_line(traj.frames[0], n), ha="center", va="top", fontsize=FONT_SIZE)
+    stats = fig.text(0.5, 0.975, _stats_line(traj.frames[0], N), ha="center", va="top", fontsize=FONT_SIZE)
 
     def draw(index: int) -> None:
         frame = traj.frames[index]
@@ -104,7 +104,7 @@ def make_figure(traj: Traj, arrows: bool = False):
         if quiver is not None:
             quiver.set_offsets([(p[0], p[1]) for p in frame.particles])
             quiver.set_UVC([p[2] for p in frame.particles], [p[3] for p in frame.particles])
-        stats.set_text(_stats_line(frame, n))
+        stats.set_text(_stats_line(frame, N))
 
     draw(0)
     return fig, draw

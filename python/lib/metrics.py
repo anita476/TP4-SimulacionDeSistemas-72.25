@@ -1,12 +1,12 @@
 from traj import Traj
 
 
-def nu90(n: int) -> int:
-    return -(-9 * n // 10)
+def nu90(N: int) -> int:
+    return -(-9 * N // 10)
 
 
 def t90_or_none(traj: Traj) -> float | None:
-    target = nu90(traj.n)
+    target = nu90(traj.N)
     for frame in traj.frames:
         if frame.nu >= target:
             return frame.t
@@ -17,7 +17,7 @@ def t90(traj: Traj) -> float:
     value = t90_or_none(traj)
     if value is None:
         last = traj.frames[-1]
-        raise ValueError(f"Fu did not reach 0.9 (Fu={last.nu / traj.n:.3f} at t={last.t})")
+        raise ValueError(f"Fu did not reach 0.9 (Fu={last.nu / traj.N:.3f} at t={last.t})")
     return value
 
 

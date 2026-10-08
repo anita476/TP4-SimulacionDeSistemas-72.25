@@ -13,10 +13,11 @@ class Frame:
 class Traj:
     R: float
     r: float
-    n: int
+    N: int
     obstacles: list[tuple[float, float, float]]
     frames: list[Frame]
     m: float | None = None
+    k: float | None = None
 
 
 def _fail(path: str, lineno: int, msg: str) -> None:
@@ -51,16 +52,16 @@ def read_traj(path: str | Path) -> Traj:
         raise ValueError(f"{path_s}: empty file")
 
     header: dict[str, float] = {}
-    n: int | None = None
+    N: int | None = None
     obstacles: list[tuple[float, float, float]] = []
     i = 0
     while i < len(rows) and rows[i][1].split()[0] != "t":
         lineno, line = rows[i]
         tag = line.split()[0]
-        if tag in ("R", "r", "m"):
+        if tag in ("R", "r", "m", "k"):
             header[tag] = float(_tokens(path_s, lineno, line, 2)[1])
         elif tag == "N":
-            n = int(_tokens(path_s, lineno, line, 2)[1])
+            N = int(_tokens(path_s, lineno, line, 2)[1])
         elif tag == "O":
             _, x, y, radius = _tokens(path_s, lineno, line, 4)
             obstacles.append((float(x), float(y), float(radius)))
@@ -71,16 +72,18 @@ def read_traj(path: str | Path) -> Traj:
     missing = [key for key in ("R", "r") if key not in header]
     if "m" in header and header["m"] <= 0:
         raise ValueError(f"{path_s}: m must be > 0, got {header['m']}")
-    if n is None:
+    if "k" in header and header["k"] <= 0:
+        raise ValueError(f"{path_s}: k must be > 0, got {header['k']}")
+    if N is None:
         missing.append("N")
     if missing:
         raise ValueError(f"{path_s}: missing header fields: {', '.join(missing)}")
-    assert n is not None
+    assert N is not None
     for key in ("R", "r"):
         if header[key] <= 0:
             raise ValueError(f"{path_s}: {key} must be > 0, got {header[key]}")
-    if n < 1:
-        raise ValueError(f"{path_s}: N must be >= 1, got {n}")
+    if N < 1:
+        raise ValueError(f"{path_s}: N must be >= 1, got {N}")
 
     frames: list[Frame] = []
     while i < len(rows):
@@ -90,10 +93,10 @@ def read_traj(path: str | Path) -> Traj:
             _fail(path_s, lineno, f"expected 't <s> Nu <int>', got {line!r}")
         t, nu = float(parts[1]), int(parts[3])
         i += 1
-        if i + n > len(rows):
+        if i + N > len(rows):
             raise ValueError(f"{path_s}: truncated frame at t={t}")
         particles: list[tuple[float, float, float, float, int]] = []
-        for _ in range(n):
+        for _ in range(N):
             lineno, line = rows[i]
             x, y, vx, vy, color = _tokens(path_s, lineno, line, 5)
             used = _used(path_s, lineno, color)
@@ -110,8 +113,9 @@ def read_traj(path: str | Path) -> Traj:
     return Traj(
         R=header["R"],
         r=header["r"],
-        n=n,
+        N=N,
         obstacles=obstacles,
         frames=frames,
         m=header.get("m"),
+        k=header.get("k"),
     )

@@ -12,8 +12,6 @@
 
 namespace {
 
-constexpr double spring_k = 1.0e4;
-
 bool repulsion_on_i(double xi, double yi, double ri, double xj, double yj, double rj, double &fx, double &fy) {
 	const double dx = xj - xi;
 	const double dy = yj - yi;

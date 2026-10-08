@@ -184,6 +184,6 @@ def save_figure(fig, path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(path, dpi=SAVE_DPI, bbox_inches="tight", pad_inches=0.12, facecolor="white")
     plt.close(fig)
-    print(f"se escribió {path}")
+    print(f"wrote {path}")
 
 
