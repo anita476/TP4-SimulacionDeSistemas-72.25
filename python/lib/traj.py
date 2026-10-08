@@ -1,0 +1,117 @@
+from dataclasses import dataclass
+from pathlib import Path
+
+
+@dataclass
+class Frame:
+    t: float
+    nu: int
+    particles: list[tuple[float, float, float, float, int]]
+
+
+@dataclass
+class Traj:
+    R: float
+    r: float
+    n: int
+    obstacles: list[tuple[float, float, float]]
+    frames: list[Frame]
+    m: float | None = None
+
+
+def _fail(path: str, lineno: int, msg: str) -> None:
+    raise ValueError(f"{path}:{lineno}: {msg}")
+
+
+def _tokens(path: str, lineno: int, line: str, expected: int) -> list[str]:
+    parts = line.split()
+    if len(parts) != expected:
+        _fail(path, lineno, f"expected {expected} fields, got {len(parts)}: {line!r}")
+    return parts
+
+
+def _used(path: str, lineno: int, token: str) -> int:
+    if token == "azul":
+        return 0
+    if token == "roja":
+        return 1
+    _fail(path, lineno, f"color must be azul or roja, not {token!r}")
+    return 0
+
+
+def read_traj(path: str | Path) -> Traj:
+    path_s = str(path)
+    rows: list[tuple[int, str]] = []
+    with open(path, encoding="utf-8") as fh:
+        for lineno, raw in enumerate(fh, 1):
+            line = raw.split("#", 1)[0].strip()
+            if line:
+                rows.append((lineno, line))
+    if not rows:
+        raise ValueError(f"{path_s}: empty file")
+
+    header: dict[str, float] = {}
+    n: int | None = None
+    obstacles: list[tuple[float, float, float]] = []
+    i = 0
+    while i < len(rows) and rows[i][1].split()[0] != "t":
+        lineno, line = rows[i]
+        tag = line.split()[0]
+        if tag in ("R", "r", "m"):
+            header[tag] = float(_tokens(path_s, lineno, line, 2)[1])
+        elif tag == "N":
+            n = int(_tokens(path_s, lineno, line, 2)[1])
+        elif tag == "O":
+            _, x, y, radius = _tokens(path_s, lineno, line, 4)
+            obstacles.append((float(x), float(y), float(radius)))
+        else:
+            _fail(path_s, lineno, f"unknown header tag {tag!r}")
+        i += 1
+
+    missing = [key for key in ("R", "r") if key not in header]
+    if "m" in header and header["m"] <= 0:
+        raise ValueError(f"{path_s}: m must be > 0, got {header['m']}")
+    if n is None:
+        missing.append("N")
+    if missing:
+        raise ValueError(f"{path_s}: missing header fields: {', '.join(missing)}")
+    assert n is not None
+    for key in ("R", "r"):
+        if header[key] <= 0:
+            raise ValueError(f"{path_s}: {key} must be > 0, got {header[key]}")
+    if n < 1:
+        raise ValueError(f"{path_s}: N must be >= 1, got {n}")
+
+    frames: list[Frame] = []
+    while i < len(rows):
+        lineno, line = rows[i]
+        parts = _tokens(path_s, lineno, line, 4)
+        if parts[0] != "t" or parts[2] != "Nu":
+            _fail(path_s, lineno, f"expected 't <s> Nu <int>', got {line!r}")
+        t, nu = float(parts[1]), int(parts[3])
+        i += 1
+        if i + n > len(rows):
+            raise ValueError(f"{path_s}: truncated frame at t={t}")
+        particles: list[tuple[float, float, float, float, int]] = []
+        for _ in range(n):
+            lineno, line = rows[i]
+            x, y, vx, vy, color = _tokens(path_s, lineno, line, 5)
+            used = _used(path_s, lineno, color)
+            particles.append((float(x), float(y), float(vx), float(vy), used))
+            i += 1
+        used_count = sum(p[4] for p in particles)
+        if used_count != nu:
+            _fail(path_s, lineno, f"Nu={nu} but {used_count} particles are used")
+        frames.append(Frame(t, nu, particles))
+
+    if not frames:
+        raise ValueError(f"{path_s}: no frames")
+
+    return Traj(
+        R=header["R"],
+        r=header["r"],
+        n=n,
+        obstacles=obstacles,
+        frames=frames,
+        m=header.get("m"),
+    )
