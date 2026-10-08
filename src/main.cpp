@@ -1,4 +1,5 @@
 #include <argparse/argparse.hpp>
+#include <cmath>
 #include <cstdint>
 #include <filesystem>
 #include <fstream>
@@ -8,6 +9,7 @@
 #include <string>
 #include <vector>
 
+#include "billiard.hpp"
 #include "dump.hpp"
 #include "generator.hpp"
 #include "obstacle.hpp"
@@ -41,6 +43,9 @@ int main(int argc, char *argv[]) {
 	    .help("obstacle file: one 'x y radius' line per obstacle (m)");
 	program.add_argument("-xo").scan<'g', double>().help(
 	    "two obstacles of radius r at (-xo, 0) and (+xo, 0); not combined with -obstacles");
+	program.add_argument("-dt").scan<'g', double>().help("time step (s); requires -tf and -n");
+	program.add_argument("-tf").scan<'g', double>().help("final time (s); requires -dt and -n");
+	program.add_argument("-n").scan<'i', int>().help("save every n steps (dt2 = n dt); requires -dt and -tf");
 	program.add_argument("--out").default_value(std::string("")).help("dump path (empty = no dump)");
 
 	try {
@@ -60,8 +65,26 @@ int main(int argc, char *argv[]) {
 	const std::string obstacles_path = program.get<std::string>("-obstacles");
 	const std::string out_path = program.get<std::string>("--out");
 	const bool use_xo = program.is_used("-xo");
+	const bool use_dt = program.is_used("-dt");
+	const bool use_tf = program.is_used("-tf");
+	const bool use_n = program.is_used("-n");
 
 	try {
+		if (use_dt || use_tf || use_n) {
+			if (!(use_dt && use_tf && use_n))
+				throw std::invalid_argument("-dt, -tf and -n must be given together");
+		}
+		const double dt = use_dt ? program.get<double>("-dt") : 0.0;
+		const double tf = use_tf ? program.get<double>("-tf") : 0.0;
+		const int n = use_n ? program.get<int>("-n") : 0;
+		if (use_dt) {
+			if (!std::isfinite(dt) || !(dt > 0.0))
+				throw std::invalid_argument("dt must be finite and > 0");
+			if (!std::isfinite(tf) || !(tf > 0.0))
+				throw std::invalid_argument("tf must be finite and > 0");
+			if (n < 1)
+				throw std::invalid_argument("n must be >= 1");
+		}
 		if (use_xo && !obstacles_path.empty())
 			throw std::invalid_argument("-xo and -obstacles cannot be combined");
 
@@ -85,20 +108,39 @@ int main(int argc, char *argv[]) {
 		gen.obstacles = obstacles;
 		gen.seed = static_cast<std::uint64_t>(seed);
 
-		GeneratorStats gen_stats;
-		const std::vector<Particle> particles = generate_particles(gen, &gen_stats);
+		std::vector<Particle> particles = generate_particles(gen);
 
+		std::ofstream file;
 		if (!out_path.empty()) {
-			std::ofstream file = open_dump(out_path);
+			file = open_dump(out_path);
 			write_dump_header(file, R, r, m, N, obstacles);
+			if (!file)
+				throw std::runtime_error("error writing " + out_path);
+		}
+
+		if (use_dt) {
+			BilliardRun run{R, dt, tf, n};
+			integrate_billiard(particles, obstacles, run, out_path.empty() ? nullptr : &file);
+		} else if (!out_path.empty()) {
 			write_dump_frame(file, 0.0, particles);
+			if (!file)
+				throw std::runtime_error("error writing " + out_path);
 		}
 
 		std::cout << std::fixed << std::setprecision(6) << "Particles:       " << N << '\n'
 		          << "Domain radius:   " << R << " m\n"
 		          << "Obstacles:       " << obstacles.size() << '\n'
 		          << "Random seed:     " << seed << (seed == 0 ? " (unfixed)\n" : "\n") << std::setprecision(2)
-		          << "Occupied area:   " << 100.0 * gen_stats.packing_fraction << "%\n";
+		          << "Occupied area:   " << 100.0 * packing_fraction(gen) << "%\n";
+		if (use_dt) {
+			int nu = 0;
+			for (const Particle &p : particles)
+				nu += p.used ? 1 : 0;
+			std::cout << std::setprecision(6) << "Time step:       " << dt << " s\n"
+			          << "Final time:      " << tf << " s\n"
+			          << "Save every:      " << n << " steps\n"
+			          << "Used particles:  " << nu << '\n';
+		}
 		if (out_path.empty())
 			std::cout << "Trajectory file: disabled\n";
 		else

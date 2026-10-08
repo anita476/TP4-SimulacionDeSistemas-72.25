@@ -6,12 +6,12 @@
 #include "obstacle.hpp"
 #include "particle.hpp"
 
-inline void write_dump_header(std::ostream &out, double R, double r, double m, int n,
+inline void write_dump_header(std::ostream &out, double R, double r, double m, int N,
                               const std::vector<Obstacle> &obstacles) {
 	out << "R " << R << '\n';
 	out << "r " << r << '\n';
 	out << "m " << m << '\n';
-	out << "N " << n << '\n';
+	out << "N " << N << '\n';
 	for (const Obstacle &o : obstacles)
 		out << "O " << o.x << ' ' << o.y << ' ' << o.radius << '\n';
 }

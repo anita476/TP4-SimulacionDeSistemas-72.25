@@ -15,8 +15,6 @@ struct GeneratorConfig {
 	int max_attempts = 100000;
 };
 
-struct GeneratorStats {
-	double packing_fraction = 0.0;
-};
+double packing_fraction(const GeneratorConfig &cfg);
 
-std::vector<Particle> generate_particles(const GeneratorConfig &cfg, GeneratorStats *stats = nullptr);
+std::vector<Particle> generate_particles(const GeneratorConfig &cfg);

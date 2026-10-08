@@ -22,6 +22,7 @@ FetchContent_MakeAvailable(argparse)
 add_library(sim_core STATIC
     src/utils/obstacle.cpp
     src/utils/generator.cpp
+    src/utils/billiard.cpp
 )
 
 target_include_directories(sim_core PUBLIC
