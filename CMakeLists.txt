@@ -19,21 +19,38 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(argparse)
 
-add_library(sim_core STATIC
+add_library(sim_core_table STATIC
     src/utils/obstacle.cpp
     src/utils/generator.cpp
     src/utils/billiard.cpp
 )
 
-target_include_directories(sim_core PUBLIC
+add_library(sim_core_oscillator STATIC
+    src/utils/methods.cpp
+)
+
+# Add include directories to a target.
+target_include_directories(sim_core_table PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/src/utils/include
 )
 
-add_executable(TimeDrivenSim
-    src/main.cpp
+target_include_directories(sim_core_oscillator PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/utils/include
 )
 
-target_link_libraries(TimeDrivenSim PRIVATE
-    sim_core
+add_executable(TimeDrivenSimTable
+    src/table_main.cpp
+)
+add_executable(TimeDrivenSimOscillator
+    src/oscillator_main.cpp
+)
+
+target_link_libraries(TimeDrivenSimTable PRIVATE
+    sim_core_table
+    argparse
+)
+
+target_link_libraries(TimeDrivenSimOscillator PRIVATE 
+    sim_core_oscillator
     argparse
 )

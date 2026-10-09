@@ -5,3 +5,26 @@ Integrantes:
 - Camila Lee
 - Matías Leporini
 - Ana Negre 
+
+
+## Compilación 
+Para el motor de simulación:
+
+```bash
+cmake -S . -B build
+cmake --build build
+```
+
+Antes de ejecutar los scripts de animación y plots:
+
+```bash
+python -m venv .venv
+source /path/to/venv 
+python install -r scripts/requirements.txt
+```
+
+## Ejecución de una simulación
+
+```bash 
+./build/TimeDrivenSimTable --help
+```
