@@ -2,7 +2,8 @@
 #include "oscillator.hpp"
 
 namespace integrators {
-inline double acceleration(const ParticleOscillator &o, double r, double v) {
+inline double oscillator_acceleration(const ParticleOscillator &o, double r,
+                                      double v) {
   return (-(o.k * r) - (o.gamma * v)) / o.m;
 }
 using Step = void (*)(ParticleOscillator &, double dt);

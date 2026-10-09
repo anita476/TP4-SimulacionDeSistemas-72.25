@@ -39,14 +39,14 @@ void oscillator_step(ParticleOscillator &oscillator, double dt) {
   const double v_pred = v + 1.5 * a * dt - 0.5 * a_old * dt;
 
   // a(t+dt) con la velocidad predicha
-  const double a_pred = acceleration(oscillator, r_new, v_pred);
+  const double a_pred = oscillator_acceleration(oscillator, r_new, v_pred);
 
   // corrector: v(t+dt)
   const double v_new = v + (1.0 / 3.0) * a_pred * dt + (5.0 / 6.0) * a * dt -
                        (1.0 / 6.0) * a_old * dt;
 
   // a(t+dt) consistente con la velocidad corregida, para el próximo paso
-  const double a_new = acceleration(oscillator, r_new, v_new);
+  const double a_new = oscillator_acceleration(oscillator, r_new, v_new);
 
   // rotar estado
   oscillator.a_old = a;
@@ -64,7 +64,7 @@ void oscillator_step(ParticleOscillator &oscillator, double dt) {
   const double v = oscillator.vx;
 
   // calculo aceleración
-  const double a = acceleration(oscillator, r, v);
+  const double a = oscillator_acceleration(oscillator, r, v);
 
   // r(t+dt) = r(t) + dt v(t) + dt^2/2 a(t)
   const double r_new = r + dt * v + 0.5 * dt * dt * a;
@@ -76,7 +76,7 @@ void oscillator_step(ParticleOscillator &oscillator, double dt) {
   const double v_pred = v + dt * a;
 
   // a(t+dt) con r(t+dt) y v predicha
-  const double a_new = acceleration(oscillator, r_new, v_pred);
+  const double a_new = oscillator_acceleration(oscillator, r_new, v_pred);
 
   // paso intermedio 2: v(t+dt) = v(t+dt/2) + a(t+dt) dt/2
   // (equivale a v + dt/2 (a(t) + a(t+dt)))
@@ -91,14 +91,14 @@ void oscillator_step(ParticleOscillator &oscillator, double dt) {
   const double v = oscillator.vx;
 
   // a(t)
-  const double a = acceleration(oscillator, r, v);
+  const double a = oscillator_acceleration(oscillator, r, v);
 
   // predecir
   const double v_p = v + a * dt;
   const double r_p = r + v * dt;
 
   // Evaluar a(t+dt) con las predicciones...
-  const double a_new = acceleration(oscillator, r_p, v_p);
+  const double a_new = oscillator_acceleration(oscillator, r_p, v_p);
 
   // Corregir
   const double v_new = v + a_new * dt;
