@@ -5,12 +5,19 @@ def nu90(N: int) -> int:
     return -(-9 * N // 10)
 
 
-def t90_of_nu(N: int, series: list[tuple[float, int]]) -> float | None:
-    target = nu90(N)
+def t_of_nu(series: list[tuple[float, int]], target: int) -> float | None:
     for t, nu in series:
         if nu >= target:
             return t
     return None
+
+
+def t90_of_nu(N: int, series: list[tuple[float, int]]) -> float | None:
+    return t_of_nu(series, nu90(N))
+
+
+def t100_of_nu(N: int, series: list[tuple[float, int]]) -> float | None:
+    return t_of_nu(series, N)
 
 
 def t90_or_none(traj: Traj) -> float | None:
