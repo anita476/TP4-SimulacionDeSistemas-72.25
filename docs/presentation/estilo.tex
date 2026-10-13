@@ -1,0 +1,118 @@
+% Estilo de la presentación del TP4
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish,es-noshorthands,es-nodecimaldot]{babel}
+
+
+\usepackage{lmodern}
+\usefonttheme{professionalfonts}
+\usepackage{mathptmx}
+\usepackage{amsmath,amssymb}
+\DeclareSymbolFont{symbols}{OMS}{cmsy}{m}{n}
+\SetSymbolFont{symbols}{bold}{OMS}{cmsy}{b}{n}
+\DeclareSymbolFontAlphabet{\mathcal}{symbols}
+
+\usepackage{graphicx}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning}
+\graphicspath{{images/}{../data/}}
+
+\usetheme{Warsaw}
+\setbeamertemplate{navigation symbols}{}
+\definecolor{acento}{rgb}{0.2,0.2,0.7} 
+
+\setbeamertemplate{headline}{%
+  \leavevmode%
+  \hbox{%
+    \begin{beamercolorbox}[wd=\paperwidth,ht=2.6ex,dp=1.3ex,leftskip=.3cm,rightskip=.3cm]{section in head/foot}%
+      \usebeamerfont{section in head/foot}%
+      \insertsectionnavigationhorizontal{.98\paperwidth}{}{\hskip0pt plus1filll}%
+    \end{beamercolorbox}%
+    \begin{beamercolorbox}[wd=\paperwidth,ht=2.2ex,dp=1ex,leftskip=.3cm,rightskip=.3cm]{subsection in head/foot}%
+      \usebeamerfont{subsection in head/foot}%
+      \insertsubsectionnavigationhorizontal{.98\paperwidth}{}{\hskip0pt plus1filll}%
+    \end{beamercolorbox}%
+  }%
+  \vskip0pt%
+}
+
+% Sin esto las diapositivas salen sin numerar.
+\setbeamertemplate{page number in head/foot}[framenumber]
+
+% Separador con el título de la sección, sin numerar.
+\AtBeginSection[]{%
+  \begin{frame}[plain,noframenumbering]
+    \vfill\centering\usebeamercolor[fg]{structure}%
+    {\Huge\bfseries\insertsectionhead}\vfill
+  \end{frame}%
+}
+
+
+\newcommand{\vv}[1]{\mathbf{#1}}
+\newcommand{\ten}[1]{\times 10^{#1}}
+\newcommand{\uni}[1]{\,\mathrm{#1}}
+\newcommand{\va}{v_{a}}
+
+\newcommand{\siimagen}[3]{%
+  \IfFileExists{images/#1}{#2}{%
+    \IfFileExists{../data/#1}{#2}{%
+      \IfFileExists{figs/#1}{#2}{#3}}}%
+}
+
+\newcommand{\figura}[2][\linewidth]{%
+  \siimagen{#2}%
+    {\makebox[\linewidth][c]{\includegraphics[width=#1,height=0.74\textheight,keepaspectratio]{#2}}}%
+    {\makebox[\linewidth][c]{\framebox[#1][c]{\rule{0pt}{5cm}\textit{falta la figura}}}}%
+}
+
+
+\newenvironment{cols}{\begin{columns}[c]}{\end{columns}}
+
+\newenvironment{resultado}[1][Resultado]{%
+  \begin{beamercolorbox}[wd=\linewidth,sep=6pt,rounded=true]{block body alerted}%
+  \footnotesize\textbf{#1}\par\vspace{2pt}%
+  \begin{itemize}\setlength{\itemsep}{1pt}%
+}{%
+  \end{itemize}\end{beamercolorbox}%
+}
+
+\newenvironment{parametros}[1][Parámetros]{%
+  \begin{beamercolorbox}[wd=\linewidth,sep=6pt,rounded=true]{block body}%
+  \footnotesize\textbf{#1}\par\vspace{2pt}%
+  \begin{itemize}\setlength{\itemsep}{1pt}%
+}{%
+  \end{itemize}\end{beamercolorbox}%
+}
+
+\providecommand{\animbuild}{0}
+\newif\ifanim
+\ifnum\animbuild=1 \animtrue \else \animfalse \fi
+\ifanim\usepackage{animate}\fi
+
+\newcommand{\animacion}[6]{%
+  \ifanim
+    \animategraphics[autoplay,loop,width=\linewidth]{#4}{#1}{#2}{#3}%
+  \else
+    \siimagen{#5}%
+      {\makebox[\linewidth][c]{\includegraphics[width=\linewidth,height=0.88\textheight,keepaspectratio]{#5}}}%
+      {\makebox[\linewidth][c]{\framebox[\linewidth][c]{\rule{0pt}{4.2cm}\textit{fotograma}}}}%
+
+    \if\relax\detokenize{#6}\relax\else
+      \par\vspace{2pt}{\scriptsize\color{acento}\url{#6}}%
+    \fi%
+  \fi
+}
+
+
+% Logo ITBA al pie de la portada
+\addtobeamertemplate{title page}{}{%
+  \begin{tikzpicture}[remember picture,overlay]
+    \node[
+      anchor=south,
+      yshift=0.35cm
+    ] at (current page.south) {%
+      \includegraphics[height=0.65cm]{images/Itba_bsas_logo.png}
+    };
+  \end{tikzpicture}%
+}
