@@ -142,6 +142,28 @@ def plot_fv(
     subprocess.check_call(cmd)
 
 
+def plot_panels(output: Path, panels: list[tuple[str, Path]], kbt: float) -> None:
+    """Bar histograms (mu +- sigma over seeds), one panel per instant, with the fitted MB curve and v0."""
+    cmd = [
+        sys.executable,
+        str(ROOT / "scripts" / "plotters" / "plot_fv_panels.py"),
+        "--output",
+        str(output),
+        "--xmax",
+        f"{V_MAX:.10g}",
+        "--vline",
+        f"{V0:.10g}",
+        r"$v_0$",
+        "--fit",
+        f"{kbt:.10g}",
+        "--m",
+        f"{M:.10g}",
+    ]
+    for label, table in panels:
+        cmd += ["--panel", label, str(table)]
+    subprocess.check_call(cmd)
+
+
 def main() -> None:
     if not DT_FILE.is_file():
         raise SystemExit(f"missing {DT_FILE}")
@@ -260,7 +282,11 @@ def main() -> None:
     if not later:
         later = series
     plot_fv(OUT / "fv_tiempos.png", later, vline=(V0, t_label(0.0)))
-    plot_fv(OUT / "fv_ajuste.png", [("simulación", tables[t_fit])], kbt=kbt_fit)
+    plot_panels(OUT / "fv_ajuste.png", [(t_label(t_fit), tables[t_fit])], kbt_fit)
+    # One panel per instant (same axes); the 2 s vs 10 s overlay is kept for the stationarity claim.
+    plot_panels(OUT / "fv_paneles.png", later, kbt_fit)
+    if len(later) >= 2:
+        plot_fv(OUT / "fv_estacionario_check.png", later[-2:], kbt=kbt_fit)
     subprocess.check_call(
         [
             sys.executable,
@@ -271,11 +297,13 @@ def main() -> None:
             str(OUT / "error_ajuste.png"),
             "--reference",
             f"{kbt_v0:.10g}",
+            "--kinetic",
+            f"{kbt_kin:.10g}",
         ]
     )
 
     FIGS.mkdir(parents=True, exist_ok=True)
-    names = ["fv_tiempos.png", "fv_ajuste.png", "fit.txt", "error_ajuste.txt", "error_ajuste.png"]
+    names = ["fv_tiempos.png", "fv_ajuste.png", "fit.txt", "error_ajuste.txt", "error_ajuste.png", "fv_paneles.png", "fv_estacionario_check.png"]
     names += [path.name for _t, path in series]
     for name in names:
         src = OUT / name
