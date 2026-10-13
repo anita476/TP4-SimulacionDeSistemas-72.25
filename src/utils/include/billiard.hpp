@@ -13,6 +13,8 @@ struct BilliardRun {
 	double dt;
 	double tf;
 	int n;
+	bool until_used = false;
+	double stall = 0;
 };
 
 void integrate_billiard(std::vector<Particle> &particles, const std::vector<Obstacle> &obstacles,

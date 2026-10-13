@@ -46,6 +46,11 @@ int main(int argc, char *argv[]) {
 	program.add_argument("-dt").scan<'g', double>().help("time step (s); requires -tf and -n");
 	program.add_argument("-tf").scan<'g', double>().help("final time (s); requires -dt and -n");
 	program.add_argument("-n").scan<'i', int>().help("save every n steps (dt2 = n dt); requires -dt and -tf");
+	program.add_argument("--until-used")
+	    .flag()
+	    .help("stop when every particle is used; -tf is then only a ceiling");
+	program.add_argument("-stall").default_value(0.0).scan<'g', double>().help(
+	    "seconds; before Nu reaches ceil(0.9 N), stop if one such interval converts at most N/50 particles");
 	program.add_argument("-init")
 	    .default_value(std::string("random"))
 	    .choices("random", "hex")
@@ -124,7 +129,7 @@ int main(int argc, char *argv[]) {
 		}
 
 		if (use_dt) {
-			BilliardRun run{R, dt, tf, n};
+			BilliardRun run{R, dt, tf, n, program.get<bool>("--until-used"), program.get<double>("-stall")};
 			integrate_billiard(particles, obstacles, run, out_path.empty() ? nullptr : &file);
 		} else if (!out_path.empty()) {
 			write_dump_frame(file, 0.0, particles);

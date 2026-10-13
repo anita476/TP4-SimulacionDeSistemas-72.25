@@ -7,19 +7,20 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts" / "lib"))
 
-from metrics import mean_std, t100_of_nu, t90_of_nu
+from metrics import mean_std, nu90, t100_of_nu, t90_of_nu
 from traj import read_nu_series
 
 EXE = ROOT / "build-local" / "TimeDrivenSim.exe"
 DT_FILE = ROOT / "docs" / "results" / "2.1" / "dt.txt"
 FIGS = ROOT / "docs" / "results" / "2.4"
-WORK = Path(os.environ.get("TEMP", "/tmp")) / "tp4_24_consigna"
+WORK = Path(os.environ.get("TEMP", "/tmp")) / "tp4_24_event"
 OUT = WORK
 
 R = 0.51
 r = 0.0175
 XO = r
-TF = 30.0
+STALL = 0.0
+TF = 2000.0
 DT2 = 0.05
 REPS = 10
 SEEDS = list(range(1, REPS + 1))
@@ -58,14 +59,37 @@ def dump_dir(n: int) -> Path:
     return OUT / "dumps" / f"N{n}"
 
 
+def stop_path(path: Path) -> Path:
+    return path.with_suffix(".stop")
+
+
+def classify(n: int, series: list[tuple[float, int]]) -> str:
+    t_last, nu_last = series[-1]
+    if nu_last >= n:
+        return "used"
+    if t_last + 1e-6 >= TF:
+        return "ceiling"
+    if STALL > 0.0 and nu_last < nu90(n) and t_last + 1e-9 >= STALL:
+        return "arrested"
+    raise RuntimeError(f"run ended at t={t_last} Nu={nu_last} without a terminal condition")
+
+
 def dump_complete(path: Path, n: int) -> bool:
-    if not path.is_file() or path.stat().st_size == 0:
+    marker = stop_path(path)
+    if not path.is_file() or path.stat().st_size == 0 or not marker.is_file():
         return False
     try:
         N, series = read_nu_series(path)
     except (OSError, ValueError):
         return False
-    return N == n and series[-1][0] + 1e-12 >= TF
+    if N != n or not series:
+        return False
+    kind = marker.read_text(encoding="utf-8").strip()
+    try:
+        terminal = classify(n, series)
+    except RuntimeError:
+        return False
+    return kind in ("used", "arrested", "ceiling") and kind == terminal
 
 
 def simulate(n: int, seed: int, dt: float) -> Path:
@@ -76,6 +100,9 @@ def simulate(n: int, seed: int, dt: float) -> Path:
         return path
     if path.exists():
         path.unlink()
+    marker = stop_path(path)
+    if marker.exists():
+        marker.unlink()
     run_tp4(
         [
             "-N",
@@ -90,12 +117,19 @@ def simulate(n: int, seed: int, dt: float) -> Path:
             f"{dt:.10g}",
             "-tf",
             str(TF),
+            "-stall",
+            str(STALL),
+            "--until-used",
             "-n",
             str(save_stride(dt)),
             "--out",
             str(path),
         ]
     )
+    N, series = read_nu_series(path)
+    if N != n:
+        raise RuntimeError(f"{path}: N={N}, expected {n}")
+    stop_path(path).write_text(classify(n, series) + "\n", encoding="utf-8")
     return path
 
 
@@ -229,7 +263,7 @@ def main() -> None:
     for n in N_RUNTIME:
         init = tp4_init(n)
         for seed in SEEDS:
-            print(f"2.4 N={n} seed={seed} init={init} xo=r tf={TF}", flush=True)
+            print(f"2.4 N={n} seed={seed} init={init} xo=r until Nu=N", flush=True)
             simulate(n, seed, dt)
         row, missed = summarize(n)
         rows.append(row)
@@ -258,13 +292,6 @@ def main() -> None:
     elif missed_path.is_file():
         missed_path.unlink()
 
-    plot_series(
-        OUT / "fu_vs_phi.png",
-        [(rf"$t_f = {TF:g}\,\mathrm{{s}}$", fu_path)],
-        r"densidad $\phi$",
-        r"fracción usada $F_u(t_f)$",
-        ymax=1.02,
-    )
     time_series: list[tuple[str, Path]] = []
     if data_rows(t90_path) >= 2:
         time_series.append((r"$t_{90}$", t90_path))
@@ -277,17 +304,18 @@ def main() -> None:
         t90_plot.unlink()
     FIGS.mkdir(parents=True, exist_ok=True)
     for name in (
-        "fu_vs_phi.png",
         "t90_t100_vs_phi.png",
-        "fu_vs_phi.txt",
         "t90_vs_phi.txt",
         "t100_vs_phi.txt",
         "report.txt",
         "missed.txt",
     ):
         src = OUT / name
+        dest = FIGS / name
         if src.is_file():
-            shutil.copy2(src, FIGS / name)
+            shutil.copy2(src, dest)
+        elif dest.is_file():
+            dest.unlink()
     print("done", FIGS, flush=True)
 
 
