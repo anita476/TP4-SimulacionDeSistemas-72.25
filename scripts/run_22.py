@@ -5,12 +5,14 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT / "python" / "lib"))
+sys.path.insert(0, str(ROOT / "scripts" / "lib"))
 
+from paths import find_executable
 from metrics import mean_std, t90_of_nu
 from traj import read_nu_series
 
-EXE = ROOT / "build-local" / "TimeDrivenSim.exe"
+# EXE = ROOT / "build-local" / "TimeDrivenSim.exe"
+EXE = find_executable(ROOT, "TimeDrivenSimTable")
 DT_FILE = ROOT / "docs" / "results" / "2.1" / "dt.txt"
 FIGS = ROOT / "docs" / "results" / "2.2"
 WORK = Path(os.environ.get("TEMP", "/tmp")) / "tp4_22_consigna"
@@ -177,7 +179,7 @@ def typical_xo(values: list[float], rows: list[dict[str, float | int | None]]) -
 def plot_fu(n: int, values: list[float]) -> None:
     cmd = [
         sys.executable,
-        str(ROOT / "python" / "plotters" / "plot_fu.py"),
+        str(ROOT / "scripts" / "plotters" / "plot_fu.py"),
         "--output",
         str(OUT / f"fu_N{n}.png"),
         "--t-max",
@@ -191,7 +193,7 @@ def plot_fu(n: int, values: list[float]) -> None:
 def plot_t90(tables: list[tuple[str, Path]]) -> None:
     cmd = [
         sys.executable,
-        str(ROOT / "python" / "plotters" / "plot_t90.py"),
+        str(ROOT / "scripts" / "plotters" / "plot_t90.py"),
         "--output",
         str(OUT / "t90_vs_xo.png"),
     ]
@@ -220,8 +222,8 @@ def run_n(n: int, dt: float, values: list[float]) -> tuple[Path, list[dict[str, 
 
 
 def main() -> None:
-    if not EXE.is_file():
-        raise SystemExit(f"missing {EXE}")
+    # if not EXE.is_file():
+    #     raise SystemExit(f"missing {EXE}")
     if not DT_FILE.is_file():
         raise SystemExit(f"missing {DT_FILE}")
     dt = read_dt()

@@ -97,3 +97,4 @@ data/*.png
 *.snm
 *.fls 
 *.toc
+docs/extra

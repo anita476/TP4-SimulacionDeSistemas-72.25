@@ -7,10 +7,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts" / "lib"))
 
+from paths import find_executable
 from speed import bin_edges, fit_kbt, frame_speeds, mean_pdf, mean_v2, nearest_frame
 from traj import Traj, read_traj
 
-EXE = ROOT / "build-local" / "TimeDrivenSim.exe"
+EXE = find_executable(ROOT, "TimeDrivenSimTable")
 DT_FILE = ROOT / "docs" / "results" / "2.1" / "dt.txt"
 FIGS = ROOT / "docs" / "results" / "2.3"
 WORK = Path(os.environ.get("TEMP", "/tmp")) / "tp4_23_consigna"
@@ -140,8 +141,6 @@ def plot_fv(
 
 
 def main() -> None:
-    if not EXE.is_file():
-        raise SystemExit(f"missing {EXE}")
     if not DT_FILE.is_file():
         raise SystemExit(f"missing {DT_FILE}")
     dt = read_dt()

@@ -9,8 +9,9 @@ sys.path.insert(0, str(ROOT / "scripts" / "lib"))
 
 from metrics import mean_std, t90_of_nu
 from traj import read_nu_series
+from paths import find_executable
 
-EXE = ROOT / "build-local" / "TimeDrivenSim.exe"
+EXE = find_executable(ROOT, "TimeDrivenSimTable")
 DT_FILE = ROOT / "docs" / "results" / "2.1" / "dt.txt"
 FIGS = ROOT / "docs" / "results" / "2.4"
 TEMP = Path(os.environ.get("TEMP", "/tmp"))
@@ -182,8 +183,6 @@ def plot_heatmap(table: Path) -> None:
 
 
 def main() -> None:
-    if not EXE.is_file():
-        raise SystemExit(f"missing {EXE}")
     if not DT_FILE.is_file():
         raise SystemExit(f"missing {DT_FILE}")
     dt = read_dt()

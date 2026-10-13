@@ -7,14 +7,17 @@ import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT / "python" / "lib"))
+sys.path.insert(0, str(ROOT / "scripts" / "lib"))
 
+from paths import find_executable
 from energy import max_relative_drift
 from metrics import mean_std
 from traj import read_traj
 
-EXE = ROOT / "build-local" / "TimeDrivenSim.exe"
-TP3_EXE = ROOT.parent / "TP3-SimulacionDeSistemas-72.25" / "build-local" / "EventDrivenSim.exe"
+# EXE = ROOT / "build-local" / "TimeDrivenSim.exe"
+EXE = find_executable(ROOT, "TimeDrivenSimTable")
+# TP3_EXE = ROOT.parent / "TP3-SimulacionDeSistemas-72.25" / "build-local" / "EventDrivenSim.exe"
+TP3_ROOT = ROOT.parent / "TP3-SimulacionDeSistemas-72.25"
 FIGS = ROOT / "docs" / "results" / "2.1"
 WORK = Path(os.environ.get("TEMP", "/tmp")) / "tp4_21_consigna"
 OUT = WORK
@@ -123,11 +126,11 @@ def choose_dt(dts: list[float], dumps: list[Path]) -> float:
 
 
 def plot_energy(dts: list[float], dumps: list[Path]) -> None:
-    cmd = [sys.executable, str(ROOT / "python" / "plotters" / "plot_energy.py"), "--output", str(OUT / "energia_vs_t.png")]
+    cmd = [sys.executable, str(ROOT / "scripts" / "plotters" / "plot_energy.py"), "--output", str(OUT / "energia_vs_t.png")]
     for dt, dump in zip(dts, dumps):
         cmd += ["--series", dt_label(dt), str(dump)]
     subprocess.check_call(cmd)
-    cmd = [sys.executable, str(ROOT / "python" / "plotters" / "plot_energy_dt.py"), "--output", str(OUT / "deriva_vs_dt.png")]
+    cmd = [sys.executable, str(ROOT / "scripts" / "plotters" / "plot_energy_dt.py"), "--output", str(OUT / "deriva_vs_dt.png")]
     for dt, dump in zip(dts, dumps):
         cmd += ["--point", f"{dt:.10g}", str(dump)]
     subprocess.check_call(cmd)
@@ -181,8 +184,9 @@ def tp3_init(n: int) -> str:
 
 
 def run_tp3_times() -> Path:
-    if not TP3_EXE.is_file():
-        raise RuntimeError(f"missing {TP3_EXE}")
+    # if not TP3_EXE.is_file():
+    #     raise RuntimeError(f"missing {TP3_EXE}")
+    TP3_EXE = find_executable(TP3_ROOT, "EventDrivenSim")
     path = OUT / "times_ed.txt"
     ns: list[int] = []
     means: list[float] = []
@@ -220,7 +224,7 @@ def plot_runtime(td: Path, ed: Path) -> None:
     subprocess.check_call(
         [
             sys.executable,
-            str(ROOT / "python" / "plotters" / "plot_runtime.py"),
+            str(ROOT / "scripts" / "plotters" / "plot_runtime.py"),
             "--output",
             str(OUT / "tiempo_vs_N.png"),
             "--series",
@@ -254,7 +258,7 @@ def animate(dt: float) -> None:
             str(dump),
         ]
     )
-    animate_py = ROOT / "python" / "animate.py"
+    animate_py = ROOT / "scripts" / "animate.py"
     subprocess.check_call(
         [sys.executable, str(animate_py), "--traj", str(dump), "--png", str(OUT / "cuadro_inicial.png"), "--frame", "0"]
     )
@@ -264,8 +268,8 @@ def animate(dt: float) -> None:
 
 
 def main() -> None:
-    if not EXE.is_file():
-        raise SystemExit(f"missing {EXE}")
+    # if not EXE.is_file():
+    #     raise SystemExit(f"missing {EXE}")
     OUT.mkdir(parents=True, exist_ok=True)
     dts, dumps = run_energy()
     plot_energy(dts, dumps)

@@ -3,14 +3,14 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
-
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts" / "lib"))
 
+from paths import find_executable
 from metrics import mean_std, t100_of_nu, t90_of_nu
 from traj import read_nu_series
 
-EXE = ROOT / "build-local" / "TimeDrivenSim.exe"
+EXE = find_executable(ROOT, "TimeDrivenSimTable")
 DT_FILE = ROOT / "docs" / "results" / "2.1" / "dt.txt"
 FIGS = ROOT / "docs" / "results" / "2.4"
 WORK = Path(os.environ.get("TEMP", "/tmp")) / "tp4_24_event"
@@ -192,8 +192,6 @@ def plot_series(
 
 
 def main() -> None:
-    if not EXE.is_file():
-        raise SystemExit(f"missing {EXE}")
     if not DT_FILE.is_file():
         raise SystemExit(f"missing {DT_FILE}")
     dt = read_dt()
