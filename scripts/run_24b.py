@@ -13,8 +13,10 @@ from traj import read_nu_series
 EXE = ROOT / "build-local" / "TimeDrivenSim.exe"
 DT_FILE = ROOT / "docs" / "results" / "2.1" / "dt.txt"
 FIGS = ROOT / "docs" / "results" / "2.4"
-WORK = Path(os.environ.get("TEMP", "/tmp")) / "tp4_24b_consigna"
-PREV = Path(os.environ.get("TEMP", "/tmp")) / "tp4_22_consigna"
+TEMP = Path(os.environ.get("TEMP", "/tmp"))
+WORK = TEMP / "tp4_24b_consigna"
+PREV = TEMP / "tp4_22_consigna"
+FROM_24A = TEMP / "tp4_24_event"
 OUT = WORK
 
 R = 0.51
@@ -22,7 +24,7 @@ r = 0.0175
 XO_MIN = r
 XO_MAX = R - r
 N_XO = 9
-TMAX = 100.0
+TF = 2000.0
 DT2 = 0.05
 REPS = 5
 SEEDS = list(range(1, REPS + 1))
@@ -62,21 +64,26 @@ def dump_dir(root: Path, n: int, xo: float) -> Path:
     return root / "dumps" / f"N{n}" / f"xo{xo_tag(xo)}"
 
 
-def dump_complete(path: Path, n: int) -> bool:
+def has_t90(path: Path, n: int) -> bool:
     if not path.is_file() or path.stat().st_size == 0:
         return False
     try:
         N, series = read_nu_series(path)
     except (OSError, ValueError):
         return False
-    return N == n and series[-1][0] + 1e-12 >= TMAX
+    return N == n and t90_of_nu(n, series) is not None
 
 
 def locate_dump(n: int, xo: float, seed: int) -> Path | None:
     name = f"run_{seed}.txt"
-    for root in (OUT, PREV):
-        path = dump_dir(root, n, xo) / name
-        if dump_complete(path, n):
+    candidates = [
+        dump_dir(OUT, n, xo) / name,
+        dump_dir(PREV, n, xo) / name,
+    ]
+    if abs(xo - XO_MIN) < 1e-9:
+        candidates.append(FROM_24A / "dumps" / f"N{n}" / name)
+    for path in candidates:
+        if has_t90(path, n):
             return path
     return None
 
@@ -103,63 +110,55 @@ def simulate(n: int, xo: float, seed: int, dt: float) -> Path:
             "-dt",
             f"{dt:.10g}",
             "-tf",
-            str(TMAX),
+            str(TF),
+            "--until-used",
             "-n",
             str(save_stride(dt)),
             "--out",
             str(path),
         ]
     )
+    N, series = read_nu_series(path)
+    if N != n or t90_of_nu(n, series) is None:
+        raise RuntimeError(f"{path}: Nu={series[-1][1]} did not reach t90")
     return path
 
 
-def summarize(n: int, xo: float, paths: list[Path]) -> dict[str, float | int | None]:
+def summarize(n: int, xo: float, paths: list[Path]) -> dict[str, float | int]:
     t90s: list[float] = []
-    fu_end: list[float] = []
     for path in paths:
         N, series = read_nu_series(path)
         if N != n:
             raise RuntimeError(f"{path}: N={N}, expected {n}")
-        t_last, nu_last = series[-1]
-        fu_end.append(nu_last / n)
         t90 = t90_of_nu(n, series)
-        if t90 is not None:
-            t90s.append(t90)
-    fu_mean, fu_std = mean_std(fu_end)
-    row: dict[str, float | int | None] = {
+        if t90 is None:
+            raise RuntimeError(f"{path}: Nu={series[-1][1]} did not reach t90")
+        t90s.append(t90)
+    mean, std = mean_std(t90s)
+    return {
         "N": n,
         "xo": xo,
         "n_reached": len(t90s),
         "n_total": len(paths),
-        "fu_tmax_mean": fu_mean,
-        "fu_tmax_std": fu_std,
-        "t90_mean": None,
-        "t90_std": None,
+        "t90_mean": mean,
+        "t90_std": std,
     }
-    if len(t90s) == len(paths):
-        mean, std = mean_std(t90s)
-        row["t90_mean"] = mean
-        row["t90_std"] = std
-    return row
 
 
-def write_grid(path: Path, rows: list[dict[str, float | int | None]]) -> None:
+def write_grid(path: Path, rows: list[dict[str, float | int]]) -> None:
     with path.open("w", encoding="utf-8") as fh:
-        fh.write("N xo t90_mean t90_std n_reached n_total fu_tmax_mean fu_tmax_std\n")
+        fh.write("N xo t90_mean t90_std n_reached n_total\n")
         for row in rows:
-            t90_mean = "nan" if row["t90_mean"] is None else f"{row['t90_mean']:.8g}"
-            t90_std = "nan" if row["t90_std"] is None else f"{row['t90_std']:.8g}"
             fh.write(
-                f"{row['N']} {row['xo']:.10g} {t90_mean} {t90_std} "
-                f"{row['n_reached']} {row['n_total']} "
-                f"{row['fu_tmax_mean']:.8g} {row['fu_tmax_std']:.8g}\n"
+                f"{row['N']} {row['xo']:.10g} {row['t90_mean']:.8g} {row['t90_std']:.8g} "
+                f"{row['n_reached']} {row['n_total']}\n"
             )
 
 
-def write_optima(path: Path, rows: list[dict[str, float | int | None]]) -> None:
-    by_n: dict[int, list[dict[str, float | int | None]]] = {}
+def write_optima(path: Path, rows: list[dict[str, float | int]]) -> None:
+    by_n: dict[int, list[dict[str, float | int]]] = {}
     for row in rows:
-        if row["t90_mean"] is None or row["n_reached"] != row["n_total"]:
+        if row["n_reached"] != row["n_total"]:
             continue
         by_n.setdefault(int(row["N"]), []).append(row)
     with path.open("w", encoding="utf-8") as fh:
@@ -191,18 +190,21 @@ def main() -> None:
     print(f"dt={dt:g} from {DT_FILE}", flush=True)
     OUT.mkdir(parents=True, exist_ok=True)
     values = xo_values()
-    rows: list[dict[str, float | int | None]] = []
+    rows: list[dict[str, float | int]] = []
     for n in N_VALUES:
         for xo in values:
             paths: list[Path] = []
             for seed in SEEDS:
-                print(f"2.4b N={n} xo={xo:.6g} seed={seed}", flush=True)
+                found = locate_dump(n, xo, seed)
+                if found is None:
+                    print(f"2.4b N={n} xo={xo:.6g} seed={seed} run", flush=True)
+                else:
+                    print(f"2.4b N={n} xo={xo:.6g} seed={seed} reuse", flush=True)
                 paths.append(simulate(n, xo, seed, dt))
             row = summarize(n, xo, paths)
             rows.append(row)
-            t90 = "nan" if row["t90_mean"] is None else f"{row['t90_mean']:.3f}s"
             print(
-                f"  <t90>={t90} ({row['n_reached']}/{row['n_total']})  Fu(tmax)={row['fu_tmax_mean']:.3f}",
+                f"  <t90>={row['t90_mean']:.3f}s ({row['n_reached']}/{row['n_total']})",
                 flush=True,
             )
     grid = OUT / "heatmap_t90.txt"
