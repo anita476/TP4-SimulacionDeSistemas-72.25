@@ -8,8 +8,9 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts" / "lib"))
 
 from paths import find_executable
-from speed import bin_edges, fit_kbt, frame_speeds, mean_pdf, mean_v2, nearest_frame
+from speed import bin_edges, fit_kbt, frame_speeds, mean_pdf, mean_v2, nearest_frame, pdf_histogram, sweep_sse
 from traj import Traj, read_traj
+from metrics import mean_std
 
 EXE = find_executable(ROOT, "TimeDrivenSimTable")
 DT_FILE = ROOT / "docs" / "results" / "2.1" / "dt.txt"
@@ -27,7 +28,8 @@ SEEDS = list(range(1, REPS + 1))
 BIN_WIDTH = 0.1
 V_MAX = 2.5
 TIMES = (0.0, 0.1, 0.5, 2.0, 10.0)
-
+SWEEP_HALF_RANGE = 0.5 # barrer kBT* +- 50%
+SWEEP_STEPS_PER_SIDE = 200 # paso <= error/10: 0.5*0.0125 J / (5e-4 J / 10) ~ 125 pasos
 
 def save_stride(dt: float) -> int:
     return max(1, int(round(DT2 / dt)))
@@ -188,23 +190,69 @@ def main() -> None:
         [frame_speeds(nearest_frame(traj, t_fit)) for traj in trajs],
         edges,
     )
-    kbt_fit, sse = fit_kbt(M, centers, means)
+    # kbt_fit, sse = fit_kbt(M, centers, means)
+    # kbt_v0 = 0.5 * M * V0 * V0
+    # kbt_kin = 0.5 * M * mean_v2(stat_speeds)
+    # (OUT / "fit.txt").write_text(
+    #     (
+    #         f"t_fit {t_fit:.10g}\n"
+    #         f"kBT_fit {kbt_fit:.8g}\n"
+    #         f"kBT_mv02 {kbt_v0:.8g}\n"
+    #         f"kBT_kinetic {kbt_kin:.8g}\n"
+    #         f"sse {sse:.8g}\n"
+    #         f"m {M:.8g}\n"
+    #         f"v0 {V0:.8g}\n"
+    #     ),
+    #     encoding="utf-8",
+    # )
+    # print(
+    #     f"kBT_fit={kbt_fit:.5g}  m v0^2/2={kbt_v0:.5g}  m <v^2>/2={kbt_kin:.5g}  sse={sse:.4g}",
+    #     flush=True,
+    # )
+    
     kbt_v0 = 0.5 * M * V0 * V0
     kbt_kin = 0.5 * M * mean_v2(stat_speeds)
+    
+    kbt_values = [
+        kbt_v0 * (1.0 + SWEEP_HALF_RANGE * (i / SWEEP_STEPS_PER_SIDE - 1.0))
+        for i in range(2*SWEEP_STEPS_PER_SIDE+1)
+    ]
+    curve = sweep_sse(M, centers, means, kbt_values)
+    kbt_fit, sse = min(curve, key=lambda item: item[1])
+    with (OUT / "error_ajuste.txt").open("w", encoding="utf-8") as fh:
+        fh.write("kBT E\n")
+        for kbt, error in curve:
+            fh.write(f"{kbt:.10g} {error:.8g}\n")
+    threshold = sse * (1.0+1.0/len(centers))
+    inside = [kbt for kbt,error in curve if error <= threshold]
+    kbt_halfwidth = 0.5 * (max(inside) - min(inside))
+    
+    # we can do a numerical check here against the "golden" value that is taken using the aurea function(?)
+    
+    per_seed: list[float] = []
+    for traj in trajs:
+        seed_centers, seed_density = pdf_histogram(frame_speeds(nearest_frame(traj, t_fit)), edges)
+        seed_curve = sweep_sse(M, seed_centers, seed_density, kbt_values)
+        per_seed.append(min(seed_curve, key=lambda item: item[1])[0])
+        kbt_seed_mean, kbt_seed_std = mean_std(per_seed)
     (OUT / "fit.txt").write_text(
         (
             f"t_fit {t_fit:.10g}\n"
             f"kBT_fit {kbt_fit:.8g}\n"
+            f"E_min {sse:.8g}\n"
+            f"kBT_halfwidth {kbt_halfwidth:.8g}\n"
+            f"kBT_seed_mean {kbt_seed_mean:.8g}\n"
+            f"kBT_seed_std {kbt_seed_std:.8g}\n"
             f"kBT_mv02 {kbt_v0:.8g}\n"
             f"kBT_kinetic {kbt_kin:.8g}\n"
-            f"sse {sse:.8g}\n"
             f"m {M:.8g}\n"
             f"v0 {V0:.8g}\n"
         ),
         encoding="utf-8",
     )
     print(
-        f"kBT_fit={kbt_fit:.5g}  m v0^2/2={kbt_v0:.5g}  m <v^2>/2={kbt_kin:.5g}  sse={sse:.4g}",
+        f"kBT_fit={kbt_fit:.5g} (+-{kbt_seed_std:.2g} over seeds)  m v0^2/2={kbt_v0:.5g}  "
+        f"m <v^2>/2={kbt_kin:.5g}  E_min={sse:.4g}",
         flush=True,
     )
 
@@ -213,9 +261,21 @@ def main() -> None:
         later = series
     plot_fv(OUT / "fv_tiempos.png", later, vline=(V0, t_label(0.0)))
     plot_fv(OUT / "fv_ajuste.png", [("simulación", tables[t_fit])], kbt=kbt_fit)
+    subprocess.check_call(
+        [
+            sys.executable,
+            str(ROOT / "scripts" / "plotters" / "plot_fit_error.py"),
+            "--input",
+            str(OUT / "error_ajuste.txt"),
+            "--output",
+            str(OUT / "error_ajuste.png"),
+            "--reference",
+            f"{kbt_v0:.10g}",
+        ]
+    )
 
     FIGS.mkdir(parents=True, exist_ok=True)
-    names = ["fv_tiempos.png", "fv_ajuste.png", "fit.txt"]
+    names = ["fv_tiempos.png", "fv_ajuste.png", "fit.txt", "error_ajuste.txt", "error_ajuste.png"]
     names += [path.name for _t, path in series]
     for name in names:
         src = OUT / name

@@ -1,7 +1,10 @@
 t_fit 10
-kBT_fit 0.012724082
+kBT_fit 0.011625
+E_min 0.14621605
+kBT_halfwidth 0.00053125
+kBT_seed_mean 0.011590625
+kBT_seed_std 0.0012824309
 kBT_mv02 0.0125
-kBT_kinetic 0.012284069
-sse 0.10763157
+kBT_kinetic 0.012280379
 m 0.025
 v0 1

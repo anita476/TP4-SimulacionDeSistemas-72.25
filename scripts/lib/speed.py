@@ -129,3 +129,20 @@ def fit_kbt(
             fd = error(d)
     kbt = 0.5 * (a + b)
     return kbt, error(kbt)
+
+def sweep_sse(
+    m: float,
+    centers: list[float],
+    densities: list[float],
+    kbt_values: list[float],
+) -> list[tuple[float, float]]:
+    """E(kBT) = sum (f_i - f_MB(v_i; kBT))^2 on a grid; the minimum must be interior (Teorica 0)."""
+    if len(kbt_values) < 3:
+        raise ValueError("need at least 3 kBT values to bracket a minimum")
+    if kbt_values[0] <= 0.0 or any(b <= a for a, b in zip(kbt_values, kbt_values[1:])):
+        raise ValueError("kBT values must be positive and strictly increasing")
+    curve = [(kbt, fit_sse(kbt, m, centers, densities)) for kbt in kbt_values]
+    i_min = min(range(len(curve)), key=lambda i: curve[i][1])
+    if i_min == 0 or i_min == len(curve) - 1:
+        raise ValueError(f"E(kBT) minimum is at the edge of the sweep (kBT = {curve[i_min][0]:g})")
+    return curve
