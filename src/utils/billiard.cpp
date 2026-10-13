@@ -105,8 +105,6 @@ void validate_run(const std::vector<Particle> &particles, const std::vector<Obst
 		throw std::invalid_argument("tf must be finite and > 0");
 	if (run.n < 1)
 		throw std::invalid_argument("n must be >= 1");
-	if (!std::isfinite(run.stall) || run.stall < 0.0)
-		throw std::invalid_argument("stall must be finite and >= 0");
 	const double ratio = run.tf / run.dt;
 	if (!std::isfinite(ratio) || ratio > 1.0e12)
 		throw std::invalid_argument("tf/dt is too large");
@@ -155,24 +153,12 @@ void integrate_billiard(std::vector<Particle> &particles, const std::vector<Obst
 
 	const double dt2 = dt * dt;
 	const long long nsteps = std::llround(run.tf / dt);
-	const int nu90 = (9 * count + 9) / 10;
-	const int trickle = count / 50;
 	int nu = 0;
-	double t_block = 0.0;
-	int nu_block = 0;
 	for (long long step = 0; step <= nsteps; ++step) {
 		contact_forces(particles, obstacles, run.R, grid, fx, fy);
 		nu += mark_obstacle_contacts(particles, obstacles);
 		const double t = static_cast<double>(step) * dt;
-		bool stop = run.until_used && nu == count;
-		if (!stop && run.stall > 0.0 && nu < nu90 && (t - t_block) >= run.stall) {
-			if (nu - nu_block <= trickle)
-				stop = true;
-			else {
-				t_block = t;
-				nu_block = nu;
-			}
-		}
+		const bool stop = run.until_used && nu == count;
 		for (int i = 0; i < count; ++i) {
 			const std::size_t index = static_cast<std::size_t>(i);
 			const double inv_m = 1.0 / particles[index].m;
