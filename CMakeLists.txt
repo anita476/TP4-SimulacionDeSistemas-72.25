@@ -27,6 +27,7 @@ add_library(sim_core_table STATIC
 
 add_library(sim_core_oscillator STATIC
     src/utils/methods.cpp
+    src/utils/integrators.cpp
 )
 
 # Add include directories to a target.

@@ -56,6 +56,7 @@ void oscillator_step(ParticleOscillator &oscillator, double dt) {
 }
 
 } // namespace integrators::beeman
+
 namespace integrators::velocity_verlet {
 
 void oscillator_step(ParticleOscillator &oscillator, double dt) {
@@ -85,6 +86,7 @@ void oscillator_step(ParticleOscillator &oscillator, double dt) {
 }
 
 } // namespace integrators::velocity_verlet
+
 namespace integrators::euler_predictor_corrector {
 void oscillator_step(ParticleOscillator &oscillator, double dt) {
   const double r = oscillator.r;
