@@ -1,0 +1,53 @@
+\begin{frame}{2.1 Energía total}
+  \begin{cols}
+    \begin{column}{0.62\textwidth}
+      \figura{energia_vs_t.png}
+    \end{column}
+    \begin{column}{0.34\textwidth}
+      \begin{parametros}
+        \item $N = 300$
+        \item Sin obstáculos
+        \item $t_f = 5\uni{s}$
+        \item $dt < 10^{-2}\uni{s}$
+      \end{parametros}
+    \end{column}
+  \end{cols}
+\end{frame}
+
+\begin{frame}{2.1 Deriva relativa máxima de $E$}
+  \begin{cols}
+    \begin{column}{0.62\textwidth}
+      \figura{deriva_vs_dt.png}
+    \end{column}
+    \begin{column}{0.34\textwidth}
+      \begin{parametros}
+        \item $\max |E-E_0|/|E_0|$
+        \item Deriva relativa $\leq 1\%$
+      \end{parametros}
+      \begin{resultado}
+        \item $dt = 2\times 10^{-4}\uni{s}$
+      \end{resultado}
+    \end{column}
+  \end{cols}
+\end{frame}
+
+\begin{frame}{2.1 Tiempo de ejecución en función de $N$}
+  \begin{cols}
+    \begin{column}{0.62\textwidth}
+      \figura{tiempo_vs_N.png}
+    \end{column}
+    \begin{column}{0.34\textwidth}
+      \begin{parametros}
+        \item $x_o = r$
+        \item $t_f = 30\uni{s}$
+        \item $10$ realizaciones
+        \item $N$ de $50$ a $650$
+        \item $N > 400$: red hexagonal
+      \end{parametros}
+      \begin{resultado}
+        \item Paso temporal: $0.261\uni{s}$ a $3.92\uni{s}$
+        \item Eventos: $0.0128\uni{s}$ a $179\uni{s}$
+      \end{resultado}
+    \end{column}
+  \end{cols}
+\end{frame}
