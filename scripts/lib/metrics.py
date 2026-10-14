@@ -12,6 +12,16 @@ def t_of_nu(series: list[tuple[float, int]], target: int) -> float | None:
     return None
 
 
+def nu_at(series: list[tuple[float, int]], t: float) -> int:
+    """Nu of the last saved frame with time <= t (0 before the first frame)."""
+    nu = 0
+    for t_frame, nu_frame in series:
+        if t_frame > t + 1e-9:
+            break
+        nu = nu_frame
+    return nu
+
+
 def t90_of_nu(N: int, series: list[tuple[float, int]]) -> float | None:
     return t_of_nu(series, nu90(N))
 

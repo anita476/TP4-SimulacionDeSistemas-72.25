@@ -40,9 +40,12 @@ def main() -> None:
     parser.add_argument("--xlabel", default=r"densidad $\phi$")
     parser.add_argument("--ylabel", default="tiempo (s)")
     parser.add_argument("--ymax", type=float, default=None)
+    parser.add_argument("--logy", action="store_true", help="logarithmic y axis")
     args = parser.parse_args()
     if args.ymax is not None and not (args.ymax > 0.0):
         parser.error("--ymax must be > 0")
+    if args.logy and args.ymax is not None:
+        parser.error("--ymax is not used with --logy")
 
     fig, ax = new_figure()
     ymax = 0.0
@@ -83,7 +86,10 @@ def main() -> None:
         parser.error(str(error))
 
     style_axes(ax, args.xlabel, args.ylabel)
-    ax.set_ylim(0, args.ymax if args.ymax is not None else (ymax * 1.08 if ymax > 0 else 1.0))
+    if args.logy:
+        ax.set_yscale("log")
+    else:
+        ax.set_ylim(0, args.ymax if args.ymax is not None else (ymax * 1.08 if ymax > 0 else 1.0))
     place_legend_below(ax, ncol=min(len(args.series), 2))
     save_figure(fig, args.output)
 

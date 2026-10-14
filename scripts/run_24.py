@@ -7,7 +7,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts" / "lib"))
 
 from paths import find_executable
-from metrics import mean_std, t100_of_nu, t90_of_nu
+from metrics import mean_std, nu_at, t100_of_nu, t90_of_nu
 from traj import read_nu_series
 
 EXE = find_executable(ROOT, "TimeDrivenSimTable")
@@ -20,6 +20,7 @@ R = 0.51
 r = 0.0175
 XO = r
 TF = 2000.0
+T_REF = 30.0  # the tf of 2.1.b: Fu(T_REF) is what the 2.1.b outputs give literally
 DT2 = 0.05
 REPS = 10
 SEEDS = list(range(1, REPS + 1))
@@ -65,7 +66,7 @@ def dump_complete(path: Path, n: int) -> bool:
         N, series = read_nu_series(path)
     except (OSError, ValueError):
         return False
-    return N == n and series[-1][1] >= n
+    return N == n and (series[-1][1] >= n or series[-1][0] + 1e-9 >= TF)
 
 
 def simulate(n: int, seed: int, dt: float) -> Path:
@@ -98,31 +99,39 @@ def simulate(n: int, seed: int, dt: float) -> Path:
         ]
     )
     N, series = read_nu_series(path)
-    if N != n or series[-1][1] < n:
-        raise RuntimeError(f"{path}: ended at Nu={series[-1][1]}, expected {n}")
+    if N != n:
+        raise RuntimeError(f"{path}: N={N}, expected {n}")
+    if series[-1][1] < n:
+        print(f"  seed={seed}: Nu={series[-1][1]}/{n} at tf={TF:g} s (incomplete, reported as Fu(tf))", flush=True)
     return path
+
+
+def stats(values: list[float]) -> tuple[float, float]:
+    return mean_std(values) if values else (float("nan"), float("nan"))
 
 
 def summarize(n: int) -> dict[str, float | int]:
     t90s: list[float] = []
     t100s: list[float] = []
     fu_end: list[float] = []
+    fu_ref: list[float] = []
     for seed in SEEDS:
         path = dump_dir(n) / f"run_{seed}.txt"
         N, series = read_nu_series(path)
         if N != n:
             raise RuntimeError(f"{path}: N={N}, expected {n}")
-        nu_last = series[-1][1]
-        fu_end.append(nu_last / n)
+        fu_end.append(series[-1][1] / n)
+        fu_ref.append(nu_at(series, T_REF) / n)
         t90 = t90_of_nu(n, series)
         t100 = t100_of_nu(n, series)
-        if t90 is None or t100 is None:
-            raise RuntimeError(f"{path}: Nu={nu_last} did not reach t90 and t100")
-        t90s.append(t90)
-        t100s.append(t100)
-    t90_mean, t90_std = mean_std(t90s)
-    t100_mean, t100_std = mean_std(t100s)
+        if t90 is not None:
+            t90s.append(t90)
+        if t100 is not None:
+            t100s.append(t100)
+    t90_mean, t90_std = stats(t90s)
+    t100_mean, t100_std = stats(t100s)
     fu_mean, fu_std = mean_std(fu_end)
+    fu30_mean, fu30_std = mean_std(fu_ref)
     return {
         "N": n,
         "phi": packing_phi(n),
@@ -130,6 +139,8 @@ def summarize(n: int) -> dict[str, float | int]:
         "n_t100": len(t100s),
         "fu_tmax_mean": fu_mean,
         "fu_tmax_std": fu_std,
+        "fu30_mean": fu30_mean,
+        "fu30_std": fu30_std,
         "t90_mean": t90_mean,
         "t90_std": t90_std,
         "t100_mean": t100_mean,
@@ -146,12 +157,13 @@ def write_observable(path: Path, rows: list[dict[str, float | int]], mean_key: s
 
 def write_report(path: Path, rows: list[dict[str, float | int]]) -> None:
     with path.open("w", encoding="utf-8") as fh:
-        fh.write("N phi n_t90 t90_mean t90_std n_t100 t100_mean t100_std fu_tmax_mean fu_tmax_std\n")
+        fh.write("N phi n_t90 t90_mean t90_std n_t100 t100_mean t100_std fu_tmax_mean fu_tmax_std fu30_mean fu30_std\n")
         for row in rows:
             fh.write(
                 f"{row['N']} {row['phi']:.10g} {row['n_t90']} {row['t90_mean']:.8g} {row['t90_std']:.8g} "
                 f"{row['n_t100']} {row['t100_mean']:.8g} {row['t100_std']:.8g} "
-                f"{row['fu_tmax_mean']:.8g} {row['fu_tmax_std']:.8g}\n"
+                f"{row['fu_tmax_mean']:.8g} {row['fu_tmax_std']:.8g} "
+                f"{row['fu30_mean']:.8g} {row['fu30_std']:.8g}\n"
             )
 
 
@@ -170,6 +182,7 @@ def plot_series(
     xlabel: str,
     ylabel: str,
     ymax: float | None = None,
+    logy: bool = False,
 ) -> None:
     cmd = [
         sys.executable,
@@ -183,6 +196,8 @@ def plot_series(
     ]
     if ymax is not None:
         cmd += ["--ymax", f"{ymax:.10g}"]
+    if logy:
+        cmd += ["--logy"]
     for label, path in series:
         if table_has_rows(path):
             cmd += ["--series", label, str(path)]
@@ -218,21 +233,39 @@ def main() -> None:
     write_observable(t100_path, rows, "t100_mean", "t100_std")
     write_report(OUT / "report.txt", rows)
 
+    # Literal reading of 2.4.a: what the 2.1.b horizon (tf = 30 s) gives.
+    fu30_path = OUT / "fu30_vs_phi.txt"
+    write_observable(fu30_path, rows, "fu30_mean", "fu30_std")  # columns N phi t_mean t_std: plot_density reads them as is
+    plot_series(
+        OUT / "fu30_vs_phi.png",
+        [(rf"$F_u(t = {T_REF:g}\,\mathrm{{s}})$", fu30_path)],
+        r"densidad $\phi$",
+        rf"fracción usada a $t = {T_REF:g}$ s",
+        ymax=1.05,
+    )
+
     time_series: list[tuple[str, Path]] = []
     if data_rows(t90_path) >= 2:
         time_series.append((r"$t_{90}$", t90_path))
     if data_rows(t100_path) >= 2:
         time_series.append((r"$t_{100}$", t100_path))
     t90_plot = OUT / "t90_t100_vs_phi.png"
+    t90_plot_linear = OUT / "t90_t100_vs_phi_lineal.png"
     if time_series:
-        plot_series(t90_plot, time_series, r"densidad $\phi$", "tiempo (s)")
-    elif t90_plot.is_file():
-        t90_plot.unlink()
+        plot_series(t90_plot, time_series, r"densidad $\phi$", "tiempo (s)", logy=True)
+        plot_series(t90_plot_linear, time_series, r"densidad $\phi$", "tiempo (s)")
+    else:
+        for path in (t90_plot, t90_plot_linear):
+            if path.is_file():
+                path.unlink()
     FIGS.mkdir(parents=True, exist_ok=True)
     for name in (
         "t90_t100_vs_phi.png",
+        "t90_t100_vs_phi_lineal.png",
         "t90_vs_phi.txt",
         "t100_vs_phi.txt",
+        "fu30_vs_phi.txt",
+        "fu30_vs_phi.png",
         "report.txt",
     ):
         src = OUT / name
