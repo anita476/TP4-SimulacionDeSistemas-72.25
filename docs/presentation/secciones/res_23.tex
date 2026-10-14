@@ -1,0 +1,54 @@
+% 2.3 Distribución de velocidades
+
+\begin{frame}{2.3 Distribución del módulo de la velocidad}
+  \begin{cols}
+    \begin{column}{0.66\textwidth}
+      \figura{fv_paneles.png}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{parametros}
+        \item Sin obstáculos, $N = 100$
+        \item Bines de $0.1\uni{m/s}$; $f(v) = N_i/(N\,\Delta v)$
+      \end{parametros}
+      \begin{resultado}
+        \item Estacionario antes de $2\uni{s}$
+      \end{resultado}
+    \end{column}
+  \end{cols}
+\end{frame}
+
+\begin{frame}{2.3 Ajuste de Maxwell-Boltzmann}
+  \begin{cols}
+    \begin{column}{0.49\textwidth}
+      \figura{fv_ajuste.png}
+    \end{column}
+    \begin{column}{0.49\textwidth}
+      \figura{error_ajuste.png}
+    \end{column}
+  \end{cols}
+  \vspace{2pt}
+\end{frame}
+
+\begin{frame}{2.3 Energía térmica efectiva}
+  \begin{cols}
+    \begin{column}{0.55\textwidth}
+      \small
+      \begin{tabular}{llc}
+        \hline
+        & & $k_B T$ (J) \\
+        \hline
+        Esperado & $\tfrac{1}{2} m v_0^2$ & $1.25\ten{-2}$ \\
+        Medido   & $\tfrac{1}{2} m \langle v^2\rangle$ a $t = 10\uni{s}$ & $1.23\ten{-2}$ \\
+        Ajustado & $k_B T^{*}$, mínimo de $E$ & $(1.16 \pm 0.13)\ten{-2}$ \\
+        \hline
+      \end{tabular}
+    \end{column}
+    \begin{column}{0.42\textwidth}
+      \begin{resultado}[Observaciones]
+        \item \textbf{Esperado:}
+        \item \textbf{Medido:} $2$\,\% menor
+        \item \textbf{Ajustado:}
+      \end{resultado}
+    \end{column}
+  \end{cols}
+\end{frame}
