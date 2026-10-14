@@ -16,7 +16,9 @@
 \usepackage{graphicx}
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta,positioning}
-\graphicspath{{images/}{../data/}}
+% \graphicspath{{images/}{../data/}}
+\graphicspath{{images/}{../results/1/}{../results/2.1/}{../results/2.2/}{../results/2.3/}{../results/2.4/}}
+
 
 \usetheme{Warsaw}
 \setbeamertemplate{navigation symbols}{}
@@ -54,10 +56,19 @@
 \newcommand{\uni}[1]{\,\mathrm{#1}}
 \newcommand{\va}{v_{a}}
 
+% \newcommand{\siimagen}[3]{%
+%   \IfFileExists{images/#1}{#2}{%
+%     \IfFileExists{../data/#1}{#2}{%
+%       \IfFileExists{figs/#1}{#2}{#3}}}%
+% }
+% \siimagen{archivo}{si existe}{si no existe}: busca en las mismas carpetas que \graphicspath.
 \newcommand{\siimagen}[3]{%
   \IfFileExists{images/#1}{#2}{%
-    \IfFileExists{../data/#1}{#2}{%
-      \IfFileExists{figs/#1}{#2}{#3}}}%
+  \IfFileExists{../results/1/#1}{#2}{%
+  \IfFileExists{../results/2.1/#1}{#2}{%
+  \IfFileExists{../results/2.2/#1}{#2}{%
+  \IfFileExists{../results/2.3/#1}{#2}{%
+  \IfFileExists{../results/2.4/#1}{#2}{#3}}}}}}%
 }
 
 \newcommand{\figura}[2][\linewidth]{%
