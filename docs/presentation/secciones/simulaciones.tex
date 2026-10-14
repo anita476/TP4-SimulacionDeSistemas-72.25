@@ -1,0 +1,43 @@
+\begin{frame}{Sistema}
+  \begin{cols}
+    \begin{column}{0.48\textwidth}
+      \figura{cuadro_inicial.png}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \begin{parametros}[Parámetros fijos]
+        \item $R = 0.51\uni{m}$
+        \item $r = 0.0175\uni{m}$
+        \item $m = 0.025\uni{kg}$
+        \item $|v_0| = 1\uni{m/s}$
+        \item $k = 10^{4}\uni{N/m}$
+      \end{parametros}
+      \vspace{4pt}
+      \begin{parametros}[Parámetros variables]
+        \item $N$
+        \item $x_o$
+        \item $\phi = N(r/R)^2$
+      \end{parametros}
+    \end{column}
+  \end{cols}
+\end{frame}
+
+\begin{frame}{Observables}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      \small
+      \begin{itemize}\setlength{\itemsep}{12pt}
+        \item $F_u(t) = N_u(t)/N$
+        \item $t_{90} = \min\{t : F_u(t) \geq 0.9\}$
+        \item $t_{100} = \min\{t : N_u(t) = N\}$
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.50\textwidth}
+      \small
+      \begin{itemize}\setlength{\itemsep}{12pt}
+        \item Deriva: $\max_t |E(t) - E(0)|/|E(0)|$
+        \item $f(v)$, con $v = |\vv{v}|$
+        \item Promedio y desvío estándar muestral
+      \end{itemize}
+    \end{column}
+  \end{columns}
+\end{frame}
