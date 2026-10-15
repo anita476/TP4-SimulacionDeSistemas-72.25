@@ -90,20 +90,18 @@ void validate(const Oscillator &osc, const OscillatorRun &run) {
 
 } // namespace
 
-double integrate_oscillator(const Oscillator &osc, const OscillatorRun &run, std::ostream *out) {
+void integrate_oscillator(const Oscillator &osc, const OscillatorRun &run, std::ostream *out,
+	                      std::ostream *analytic_out) {
 	validate(osc, run);
 	const double dt = run.dt;
 	const long long nsteps = std::llround(run.tf / dt);
 	const integrators::Step step = step_for(run.method);
 
 	ParticleOscillator p = initial_state(osc, dt);
-	double sum = 0.0;
 	for (long long n = 0; n <= nsteps; ++n) {
 		const double t = static_cast<double>(n) * dt;
 		const double x_an = osc.analytic(t);
-		const double e = p.r - x_an;
-		sum += e * e;
-		if (!std::isfinite(p.r) || !std::isfinite(sum))
+		if (!std::isfinite(p.r) || !std::isfinite(x_an))
 			throw std::runtime_error("the integration diverged (dt too large for " + std::string(method_name(run.method)) +
 			                         ")");
 		if (out != nullptr) {
@@ -111,9 +109,13 @@ double integrate_oscillator(const Oscillator &osc, const OscillatorRun &run, std
 			if (out->fail())
 				throw std::runtime_error("error writing the trajectory");
 		}
+		if (analytic_out != nullptr) {
+			*analytic_out << t << ' ' << x_an << '\n';
+			if (analytic_out->fail())
+				throw std::runtime_error("error writing the analytic trajectory");
+		}
 		if (n == nsteps)
 			break;
 		step(p, dt);
 	}
-	return sum / static_cast<double>(nsteps + 1);
 }

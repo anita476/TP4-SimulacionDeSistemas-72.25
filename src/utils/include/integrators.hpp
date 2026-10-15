@@ -27,4 +27,5 @@ struct OscillatorRun {
 	double tf;
 };
 
-double integrate_oscillator(const Oscillator &osc, const OscillatorRun &run, std::ostream *out);
+void integrate_oscillator(const Oscillator &osc, const OscillatorRun &run, std::ostream *out,
+	                      std::ostream *analytic_out = nullptr);
