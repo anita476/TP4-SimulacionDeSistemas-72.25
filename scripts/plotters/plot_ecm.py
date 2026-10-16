@@ -58,11 +58,19 @@ def main() -> None:
         series = errors[method]
         if not series:
             continue
-        points = sorted((float(dt), mean_std(values)[0]) for dt, values in series.items())
-        dts = [dt for dt, _ecm in points]
-        means = [ecm for _dt, ecm in points]
-        if any(not math.isfinite(dt) for dt in dts) or any(not math.isfinite(ecm) or ecm <= 0 for ecm in means):
-            parser.error(f"{method}: dt and mean ECM must be finite and positive for logarithmic axes")
+        points = sorted((float(dt), *mean_std(values)) for dt, values in series.items())
+        dts = [dt for dt, _mean, _std in points]
+        means = [mean for _dt, mean, _std in points]
+        stds = [std for _dt, _mean, std in points]
+        if (
+            any(not math.isfinite(dt) or dt <= 0 for dt in dts)
+            or any(not math.isfinite(mean) or mean <= 0 for mean in means)
+            or any(not math.isfinite(std) or std < 0 for std in stds)
+        ):
+            parser.error(f"{method}: dt, mean ECM and standard deviation must be finite and valid for logarithmic axes")
+        lower = [mean - std if mean > std else math.nan for mean, std in zip(means, stds)]
+        upper = [mean + std for mean, std in zip(means, stds)]
+        ax.fill_between(dts, lower, upper, color=SERIES[index], alpha=0.18, linewidth=0, zorder=2)
         ax.plot(
             dts,
             means,
