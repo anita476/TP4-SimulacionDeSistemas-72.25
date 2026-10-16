@@ -8,6 +8,8 @@ from energy import energy_series
 from plot_style import SERIES, new_figure, place_legend_below, save_figure, style_axes
 from traj import read_traj
 
+COLORS = SERIES + ("#882255", "#000000")
+
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="2.1a: total energy vs time for several dt")
@@ -24,7 +26,7 @@ def main() -> None:
             times = [t for t, _energy in series]
             energies = [energy for _t, energy in series]
             t_end = max(t_end, times[-1])
-            ax.plot(times, energies, color=SERIES[i % len(SERIES)], zorder=3, label=label)
+            ax.plot(times, energies, color=COLORS[i % len(COLORS)], zorder=3, label=label)
     except (OSError, ValueError) as error:
         parser.error(str(error))
 

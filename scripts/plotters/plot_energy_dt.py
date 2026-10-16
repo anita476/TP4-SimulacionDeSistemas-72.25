@@ -36,8 +36,7 @@ def main() -> None:
     fig, ax = new_figure()
     ax.plot(dts, drifts, color=BLUE, marker="o", markeredgecolor="black", markeredgewidth=0.6, zorder=3)
     ax.set_xscale("log")
-    if all(drift > 0.0 for drift in drifts):
-        ax.set_yscale("log")
+    ax.set_ylim(bottom=0.0)
     style_axes(ax, r"paso temporal $dt$ (s)", r"deriva relativa máxima de $E$")
     save_figure(fig, args.output)
 

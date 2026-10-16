@@ -25,7 +25,7 @@ OUT = WORK
 N_ENERGY = 300
 ENERGY_TF = 30.0
 DT2 = 0.01
-DTS = (1e-4, 2e-4, 3e-4, 4e-4, 5e-4)
+DTS = (1e-5, 1e-4, 2e-4, 3e-4, 4e-4, 5e-4, 1e-2)
 DRIFT_LIMIT = 0.01
 N_RUNTIME = (50, 100, 200, 300, 400, 500, 650)
 RUNTIME_TF = 30.0
@@ -76,6 +76,17 @@ def energy_dump(dt: float) -> Path:
     return OUT / "dumps" / f"energy_N{N_ENERGY}_dt{dt:.0e}.txt"
 
 
+def dump_reaches(path: Path, tf: float) -> bool:
+    if not path.is_file() or path.stat().st_size == 0:
+        return False
+    last_t = None
+    with path.open(encoding="utf-8") as fh:
+        for line in fh:
+            if line.startswith("t "):
+                last_t = float(line.split()[1])
+    return last_t is not None and last_t + 1e-6 >= tf
+
+
 def run_energy() -> tuple[list[float], list[Path]]:
     OUT.joinpath("dumps").mkdir(parents=True, exist_ok=True)
     dts: list[float] = []
@@ -83,6 +94,11 @@ def run_energy() -> tuple[list[float], list[Path]]:
     for dt in DTS:
         path = energy_dump(dt)
         print(f"2.1a N={N_ENERGY} dt={dt:g} tf={ENERGY_TF} -> {path.name}", flush=True)
+        if dump_reaches(path, ENERGY_TF):
+            print(f"  reuse {path.name}", flush=True)
+            dts.append(dt)
+            dumps.append(path)
+            continue
         try:
             run_tp4(
                 [
