@@ -48,6 +48,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="2.4b: heatmap of mean t90 vs xo and N")
     parser.add_argument("--input", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--per-row", action="store_true", help="divide each row by its minimum")
     args = parser.parse_args()
 
     try:
@@ -72,6 +73,15 @@ def main() -> None:
             data[j, i] = value
     if not np.isfinite(data).any():
         parser.error(f"{args.input}: no complete t90 cells")
+    if args.per_row:
+        for j in range(data.shape[0]):
+            finite_row = data[j, np.isfinite(data[j])]
+            if finite_row.size == 0:
+                continue
+            baseline = float(finite_row.min())
+            if not (baseline > 0.0):
+                parser.error(f"N={ns[j]}: row minimum must be > 0 to normalize")
+            data[j] = data[j] / baseline
 
     fig, ax = new_figure()
     cmap = matplotlib.colormaps["YlOrRd"].copy()
@@ -99,7 +109,10 @@ def main() -> None:
     ax.set_xlim(_edges(np.array(xos))[0], _edges(np.array(xos))[-1])
     ax.set_ylim(-0.5, len(ns) - 0.5)
     cbar = fig.colorbar(mesh, ax=ax, pad=0.03)
-    cbar.set_label(r"tiempo $\langle t_{90}\rangle$ (s)", size=FONT_SIZE)
+    if args.per_row:
+        cbar.set_label(r"$\langle t_{90}\rangle / \min\langle t_{90}\rangle$", size=FONT_SIZE)
+    else:
+        cbar.set_label(r"tiempo $\langle t_{90}\rangle$ (s)", size=FONT_SIZE)
     cbar.ax.tick_params(labelsize=FONT_SIZE)
     cbar.outline.set_linewidth(1.15)
     save_figure(fig, args.output)

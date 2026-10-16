@@ -180,6 +180,17 @@ def plot_heatmap(table: Path) -> None:
             str(OUT / "heatmap_t90.png"),
         ]
     )
+    subprocess.check_call(
+        [
+            sys.executable,
+            str(ROOT / "scripts" / "plotters" / "plot_heatmap.py"),
+            "--input",
+            str(table),
+            "--output",
+            str(OUT / "heatmap_t90_fila.png"),
+            "--per-row",
+        ]
+    )
 
 
 def main() -> None:
@@ -211,7 +222,7 @@ def main() -> None:
     write_optima(OUT / "xo_opt.txt", rows)
     plot_heatmap(grid)
     FIGS.mkdir(parents=True, exist_ok=True)
-    for name in ("heatmap_t90.png", "heatmap_t90.txt", "xo_opt.txt"):
+    for name in ("heatmap_t90.png", "heatmap_t90_fila.png", "heatmap_t90.txt", "xo_opt.txt"):
         src = OUT / name
         if src.is_file():
             shutil.copy2(src, FIGS / name)
