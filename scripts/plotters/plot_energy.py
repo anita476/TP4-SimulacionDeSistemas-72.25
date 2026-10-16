@@ -68,11 +68,20 @@ def main() -> None:
         linewidth=1.6,
         zorder=2,
         clip_on=False,
-        label="energía analítica",
     )
     reference.set_in_layout(False)
-    place_legend_below(ax, ncol=min(len(args.series) + 1, 3))
-    save_figure(fig, args.output)
+    tag = ax.text(
+        1.09,
+        theory,
+        r"$E_0$",
+        transform=ax.get_yaxis_transform(),
+        va="center",
+        ha="left",
+        clip_on=False,
+        zorder=5,
+    )
+    place_legend_below(ax, ncol=min(len(args.series), 3))
+    save_figure(fig, args.output, extra=(tag,))
 
 
 if __name__ == "__main__":

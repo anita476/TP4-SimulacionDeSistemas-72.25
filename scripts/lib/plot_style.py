@@ -177,12 +177,19 @@ def place_legend_below(ax, ncol: int = 1):
     return ax.figure.legend(handles, labels, loc="outside lower center", ncol=ncol)
 
 
-def save_figure(fig, path: Path) -> None:
+def save_figure(fig, path: Path, extra: tuple = ()) -> None:
     apply_academic_style()
     import matplotlib.pyplot as plt
 
     path.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(path, dpi=SAVE_DPI, bbox_inches="tight", pad_inches=0.12, facecolor="white")
+    fig.savefig(
+        path,
+        dpi=SAVE_DPI,
+        bbox_inches="tight",
+        pad_inches=0.12,
+        facecolor="white",
+        bbox_extra_artists=list(extra) or None,
+    )
     plt.close(fig)
     print(f"wrote {path}")
 
