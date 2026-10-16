@@ -23,9 +23,9 @@ WORK = Path(os.environ.get("TEMP", "/tmp")) / "tp4_21_consigna"
 OUT = WORK
 
 N_ENERGY = 300
-ENERGY_TF = 5.0
+ENERGY_TF = 30.0
 DT2 = 0.01
-DTS = (1e-4, 2e-4, 5e-4, 1e-3, 2e-3, 5e-3)
+DTS = (1e-4, 2e-4, 3e-4, 4e-4, 5e-4)
 DRIFT_LIMIT = 0.01
 N_RUNTIME = (50, 100, 200, 300, 400, 500, 650)
 RUNTIME_TF = 30.0
