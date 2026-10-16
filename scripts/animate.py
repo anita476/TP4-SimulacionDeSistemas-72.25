@@ -22,14 +22,18 @@ def _stats_line(frame: Frame, N: int) -> str:
     return rf"$N_u = {frame.nu}$    $F_u = {frame.nu / N:.2f}$"
 
 
-def make_figure(traj: Traj, arrows: bool = False):
+def make_figure(traj: Traj, arrows: bool = False, plain: bool = False):
     apply_academic_style()
     import matplotlib.pyplot as plt
 
     R, r, N = traj.R, traj.r, traj.N
     margin = max(0.08 * R, 2.0 * r)
-    fig = plt.figure(figsize=(8.0, 8.6))
-    ax = fig.add_axes([0.14, 0.16, 0.78, 0.74])
+    if plain:
+        fig = plt.figure(figsize=(8.0, 7.4))
+        ax = fig.add_axes([0.16, 0.11, 0.80, 0.84])
+    else:
+        fig = plt.figure(figsize=(8.0, 8.6))
+        ax = fig.add_axes([0.14, 0.16, 0.78, 0.74])
     ax.set_xlim(-R - margin, R + margin)
     ax.set_ylim(-R - margin, R + margin)
     ax.set_aspect("equal")
@@ -64,36 +68,38 @@ def make_figure(traj: Traj, arrows: bool = False):
             zorder=5,
         )
 
-    ax.plot([], [], linestyle="none", marker="o", color=FRESH, markeredgecolor="black", label="fresca")
-    ax.plot([], [], linestyle="none", marker="o", color=USED, markeredgecolor="black", label="usada")
-    if traj.obstacles:
-        ax.plot([], [], linestyle="none", marker="o", color=OBSTACLE, markeredgecolor="black", label="obstáculo")
-    step = max(1, len(traj.frames) // 200)
-    probe = ax.scatter(
-        [p[0] for f in traj.frames[::step] for p in f.particles],
-        [p[1] for f in traj.frames[::step] for p in f.particles],
-        s=0,
-        alpha=0.0,
-    )
-    corner = legend_corner(ax)
-    probe.remove()
-    handles, labels = ax.get_legend_handles_labels()
-    ncol = 3 if traj.obstacles else 2
-    if corner is not None:
-        legend = ax.legend(handles, labels, loc=corner, frameon=True, framealpha=0.92, fancybox=False)
-        legend.set_zorder(20)
-    else:
-        ax.legend(
-            handles,
-            labels,
-            loc="upper center",
-            bbox_to_anchor=(0.5, -0.12),
-            ncol=ncol,
-            frameon=True,
-            fancybox=False,
+    if not plain:
+        ax.plot([], [], linestyle="none", marker="o", color=FRESH, markeredgecolor="black", label="fresca")
+        ax.plot([], [], linestyle="none", marker="o", color=USED, markeredgecolor="black", label="usada")
+        if traj.obstacles:
+            ax.plot([], [], linestyle="none", marker="o", color=OBSTACLE, markeredgecolor="black", label="obstáculo")
+        step = max(1, len(traj.frames) // 200)
+        probe = ax.scatter(
+            [p[0] for f in traj.frames[::step] for p in f.particles],
+            [p[1] for f in traj.frames[::step] for p in f.particles],
+            s=0,
+            alpha=0.0,
         )
-
-    stats = fig.text(0.5, 0.975, _stats_line(traj.frames[0], N), ha="center", va="top", fontsize=FONT_SIZE)
+        corner = legend_corner(ax)
+        probe.remove()
+        handles, labels = ax.get_legend_handles_labels()
+        ncol = 3 if traj.obstacles else 2
+        if corner is not None:
+            legend = ax.legend(handles, labels, loc=corner, frameon=True, framealpha=0.92, fancybox=False)
+            legend.set_zorder(20)
+        else:
+            ax.legend(
+                handles,
+                labels,
+                loc="upper center",
+                bbox_to_anchor=(0.5, -0.12),
+                ncol=ncol,
+                frameon=True,
+                fancybox=False,
+            )
+        stats = fig.text(0.5, 0.975, _stats_line(traj.frames[0], N), ha="center", va="top", fontsize=FONT_SIZE)
+    else:
+        stats = None
 
     def draw(index: int) -> None:
         frame = traj.frames[index]
@@ -104,7 +110,8 @@ def make_figure(traj: Traj, arrows: bool = False):
         if quiver is not None:
             quiver.set_offsets([(p[0], p[1]) for p in frame.particles])
             quiver.set_UVC([p[2] for p in frame.particles], [p[3] for p in frame.particles])
-        stats.set_text(_stats_line(frame, N))
+        if stats is not None:
+            stats.set_text(_stats_line(frame, N))
 
     draw(0)
     return fig, draw
@@ -120,6 +127,7 @@ def main() -> None:
     parser.add_argument("--show", action="store_true", help="open a window")
     parser.add_argument("--fps", type=int, default=8, help="dump frames per second of video")
     parser.add_argument("--arrows", action="store_true", help="velocity arrows")
+    parser.add_argument("--plain", action="store_true", help="PNG without Nu, Fu, or the legend")
     args = parser.parse_args()
 
     if args.fps < 1:
@@ -135,7 +143,7 @@ def main() -> None:
         traj = read_traj(args.traj)
     except (OSError, ValueError) as error:
         sys.exit(str(error))
-    fig, draw = make_figure(traj, arrows=args.arrows)
+    fig, draw = make_figure(traj, arrows=args.arrows, plain=args.plain)
     n_frames = len(traj.frames)
 
     def play(index: int) -> None:

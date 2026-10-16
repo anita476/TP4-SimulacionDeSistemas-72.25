@@ -144,6 +144,8 @@ def choose_dt(dts: list[float], dumps: list[Path]) -> float:
 def plot_energy(dts: list[float], dumps: list[Path]) -> None:
     cmd = [sys.executable, str(ROOT / "scripts" / "plotters" / "plot_energy.py"), "--output", str(OUT / "energia_vs_t.png")]
     for dt, dump in zip(dts, dumps):
+        if math.isclose(dt, 1e-4) or math.isclose(dt, 4e-4):
+            continue
         cmd += ["--series", dt_label(dt), str(dump)]
     subprocess.check_call(cmd)
     cmd = [sys.executable, str(ROOT / "scripts" / "plotters" / "plot_energy_dt.py"), "--output", str(OUT / "deriva_vs_dt.png")]
@@ -276,7 +278,7 @@ def animate(dt: float) -> None:
     )
     animate_py = ROOT / "scripts" / "animate.py"
     subprocess.check_call(
-        [sys.executable, str(animate_py), "--traj", str(dump), "--png", str(OUT / "cuadro_inicial.png"), "--frame", "0"]
+        [sys.executable, str(animate_py), "--traj", str(dump), "--png", str(OUT / "cuadro_inicial.png"), "--frame", "0", "--plain"]
     )
     subprocess.check_call(
         [sys.executable, str(animate_py), "--traj", str(dump), "--out", str(OUT / "animacion.gif"), "--fps", "12"]

@@ -41,7 +41,6 @@ def main() -> None:
     args = parser.parse_args()
 
     fig, ax = new_figure()
-    ymax = 0.0
     try:
         for i, (label, table) in enumerate(args.series):
             rows = load_table(Path(table), ("N", "t_mean", "t_std"))
@@ -66,12 +65,11 @@ def main() -> None:
                 zorder=3,
                 label=label,
             )
-            ymax = max(ymax, max(mean + std for mean, std in zip(means, stds)))
     except (OSError, ValueError) as error:
         parser.error(str(error))
 
     style_axes(ax, "cantidad de partículas", "tiempo de ejecución (s)")
-    ax.set_ylim(0, ymax * 1.08 if ymax > 0 else 1.0)
+    ax.set_yscale("log")
     place_legend_below(ax, ncol=min(len(args.series), 2))
     save_figure(fig, args.output)
 
