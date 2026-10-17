@@ -1,3 +1,4 @@
+import math
 import os
 import shutil
 import subprocess
@@ -142,8 +143,15 @@ def plot_fv(
     subprocess.check_call(cmd)
 
 
-def plot_panels(output: Path, panels: list[tuple[str, Path]], kbt: float) -> None:
-    """Bar histograms (mu +- sigma over seeds), one panel per instant, with the fitted MB curve and v0."""
+def plot_panels(
+    output: Path,
+    panels: list[tuple[str, Path]],
+    kbt: float | None = None,
+    vline_label: str = r"$v_0$",
+    reference: tuple[str, Path] | None = None,
+) -> None:
+    """Bar histograms (mu +- sigma over seeds), one panel per instant, with the v0 marker and,
+    optionally, the fitted MB curve and/or a reference PDF drawn as an outline on every panel."""
     cmd = [
         sys.executable,
         str(ROOT / "scripts" / "plotters" / "plot_fv_panels.py"),
@@ -153,12 +161,12 @@ def plot_panels(output: Path, panels: list[tuple[str, Path]], kbt: float) -> Non
         f"{V_MAX:.10g}",
         "--vline",
         f"{V0:.10g}",
-        r"$v_0$",
-        "--fit",
-        f"{kbt:.10g}",
-        "--m",
-        f"{M:.10g}",
+        vline_label,
     ]
+    if kbt is not None:
+        cmd += ["--fit", f"{kbt:.10g}", "--m", f"{M:.10g}"]
+    if reference is not None:
+        cmd += ["--reference", reference[0], str(reference[1])]
     for label, table in panels:
         cmd += ["--panel", label, str(table)]
     subprocess.check_call(cmd)
@@ -203,6 +211,19 @@ def main() -> None:
         tables[t] = path
         series.append((t_label(t), path))
         print(f"  t={t:g}  <v>={mean_speed_at(trajs, t):.4g}", flush=True)
+
+    # Mean speed vs time at every saved frame, mu +- sigma over seeds: a fit-free check of when
+    # f(v) stops changing. MB in 2D predicts <v> = sqrt(pi kBT / (2 m)) = sqrt(pi/4) v0 once stationary.
+    with (OUT / "vmean.txt").open("w", encoding="utf-8") as fh:
+        fh.write("t vmean_mean vmean_std\n")
+        for t in dump_times:
+            per_seed_mean = []
+            for traj in trajs:
+                speeds = frame_speeds(nearest_frame(traj, t))
+                per_seed_mean.append(sum(speeds) / len(speeds))
+            v_mean, v_std = mean_std(per_seed_mean)
+            fh.write(f"{t:.10g} {v_mean:.8g} {v_std:.8g}\n")
+    print(f"MB 2D: <v>/v0 -> sqrt(pi/4) = {math.sqrt(math.pi / 4):.4g}", flush=True)
 
     t_fit = chosen[-1]
     stat_speeds: list[float] = []
@@ -283,10 +304,30 @@ def main() -> None:
         later = series
     plot_fv(OUT / "fv_tiempos.png", later, vline=(V0, t_label(0.0)))
     plot_panels(OUT / "fv_ajuste.png", [(t_label(t_fit), tables[t_fit])], kbt_fit)
-    # One panel per instant (same axes); the 2 s vs 10 s overlay is kept for the stationarity claim.
-    plot_panels(OUT / "fv_paneles.png", later, kbt_fit)
+    # One panel per instant (same axes), without the MB curve: the fit is introduced on the next slide.
+    # The stationary profile is outlined on every panel so the approach to it is visible without a fit.
+    plot_panels(
+        OUT / "fv_paneles.png",
+        later,
+        vline_label=r"$t = 0$ (delta en $v_0$)",
+        reference=(rf"$f(v)$ a {t_label(t_fit)}", tables[t_fit]),
+    )
     if len(later) >= 2:
         plot_fv(OUT / "fv_estacionario_check.png", later[-2:], kbt=kbt_fit)
+    subprocess.check_call(
+        [
+            sys.executable,
+            str(ROOT / "scripts" / "plotters" / "plot_vmean.py"),
+            "--input",
+            str(OUT / "vmean.txt"),
+            "--output",
+            str(OUT / "vmean.png"),
+            "--v0",
+            f"{V0:.10g}",
+            "--t-fit",
+            f"{t_fit:.10g}",
+        ]
+    )
     subprocess.check_call(
         [
             sys.executable,
@@ -295,15 +336,11 @@ def main() -> None:
             str(OUT / "error_ajuste.txt"),
             "--output",
             str(OUT / "error_ajuste.png"),
-            "--reference",
-            f"{kbt_v0:.10g}",
-            "--kinetic",
-            f"{kbt_kin:.10g}",
         ]
     )
 
     FIGS.mkdir(parents=True, exist_ok=True)
-    names = ["fv_tiempos.png", "fv_ajuste.png", "fit.txt", "error_ajuste.txt", "error_ajuste.png", "fv_paneles.png", "fv_estacionario_check.png"]
+    names = ["fv_tiempos.png", "fv_ajuste.png", "fit.txt", "error_ajuste.txt", "error_ajuste.png", "fv_paneles.png", "fv_estacionario_check.png", "vmean.txt", "vmean.png"]
     names += [path.name for _t, path in series]
     for name in names:
         src = OUT / name

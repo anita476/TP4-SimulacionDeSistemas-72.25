@@ -24,20 +24,8 @@
 \setbeamertemplate{navigation symbols}{}
 \definecolor{acento}{rgb}{0.2,0.2,0.7} 
 
-\setbeamertemplate{headline}{%
-  \leavevmode%
-  \hbox{%
-    \begin{beamercolorbox}[wd=\paperwidth,ht=2.6ex,dp=1.3ex,leftskip=.3cm,rightskip=.3cm]{section in head/foot}%
-      \usebeamerfont{section in head/foot}%
-      \insertsectionnavigationhorizontal{.98\paperwidth}{}{\hskip0pt plus1filll}%
-    \end{beamercolorbox}%
-    \begin{beamercolorbox}[wd=\paperwidth,ht=2.2ex,dp=1ex,leftskip=.3cm,rightskip=.3cm]{subsection in head/foot}%
-      \usebeamerfont{subsection in head/foot}%
-      \insertsubsectionnavigationhorizontal{.98\paperwidth}{}{\hskip0pt plus1filll}%
-    \end{beamercolorbox}%
-  }%
-  \vskip0pt%
-}
+% Barra de navegación: una columna por sección, un punto por diapositiva.
+\useoutertheme[subsection=false]{miniframes}
 
 % Sin esto las diapositivas salen sin numerar.
 \setbeamertemplate{page number in head/foot}[framenumber]

@@ -1,23 +1,24 @@
 % Distribución de velocidades
 
-\begin{frame}{Distribución del módulo de la velocidad}
+\begin{frame}{Evolución de $f(v)$ hasta el estacionario}
   \begin{cols}
-    \begin{column}{0.66\textwidth}
+    \begin{column}{0.76\textwidth}
       \figura{fv_paneles.png}
     \end{column}
-    \begin{column}{0.31\textwidth}
+    \begin{column}{0.23\textwidth}
       \begin{parametros}
         \item Sin obstáculos, $N = 100$
-        \item Bines de $0.1\uni{m/s}$; $f(v) = N_i/(N\,\Delta v)$
+        \item $10$ realizaciones
       \end{parametros}
       \begin{resultado}
-        \item Estacionario antes de $2\uni{s}$
+        \item Estacionaria desde $t \approx 0.5\uni{s}$
+        \item Ajuste a $t = 10\uni{s}$
       \end{resultado}
     \end{column}
   \end{cols}
 \end{frame}
 
-\begin{frame}{Ajuste de Maxwell-Boltzmann}
+\begin{frame}{Ajuste de Maxwell-Boltzmann en el estacionario}
   \begin{cols}
     \begin{column}{0.49\textwidth}
       \figura{fv_ajuste.png}
@@ -30,25 +31,26 @@
 \end{frame}
 
 \begin{frame}{Energía térmica efectiva}
+  \vspace*{\fill}
   \begin{cols}
-    \begin{column}{0.55\textwidth}
-      \small
-      \begin{tabular}{llc}
+    \begin{column}{0.44\textwidth}
+      \centering
+      \begin{tabular}{lr}
         \hline
-        & & $k_B T$ (J) \\
+        $k_B T$ ($10^{-2}\uni{J}$) & Valor \\
         \hline
-        Esperado & $\tfrac{1}{2} m v_0^2$ & $1.25\ten{-2}$ \\
-        Medido   & $\tfrac{1}{2} m \langle v^2\rangle$ a $t = 10\uni{s}$ & $1.23\ten{-2}$ \\
-        Ajustado & $k_B T^{*}$, mínimo de $E$ & $(1.16 \pm 0.13)\ten{-2}$ \\
+        Esperado                  & $1.25$ \\
+        Medido ($t = 10\uni{s}$)  & $1.23$ \\
+        Ajustado                  & $1.16 \pm 0.13$ \\
         \hline
       \end{tabular}
     \end{column}
-    \begin{column}{0.42\textwidth}
-      \begin{resultado}[Observaciones]
-        \item \textbf{Esperado:}
-        \item \textbf{Medido:} $2$\,\% menor
-        \item \textbf{Ajustado:}
+    \begin{column}{0.52\textwidth}
+      \begin{resultado}
+        \item \textbf{Medido $\approx 2$\,\% menor:} energía almacenada en contactos
+        \item \textbf{Ajustado:} dentro de $1\sigma$ de ambos (dispersión entre semillas)
       \end{resultado}
     \end{column}
   \end{cols}
+  \vspace*{\fill}
 \end{frame}

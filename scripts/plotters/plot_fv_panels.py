@@ -7,6 +7,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "lib"))
 
 import matplotlib
 from matplotlib.colors import to_rgb
+from matplotlib.ticker import MultipleLocator
 
 from plot_style import FIGURE_SIZE, FONT_SIZE, SERIES, apply_academic_style, save_figure
 from speed import mb_pdf
@@ -55,6 +56,13 @@ def main() -> None:
     parser.add_argument("--fit", type=float, default=None, help="kBT (J): draw the 2D Maxwell-Boltzmann reference")
     parser.add_argument("--m", type=float, default=None, help="particle mass (kg); required with --fit")
     parser.add_argument("--vline", nargs=2, metavar=("V", "LABEL"), default=None, help="initial speed marker")
+    parser.add_argument(
+        "--reference",
+        nargs=2,
+        metavar=("LABEL", "TABLE"),
+        default=None,
+        help="PDF table drawn as a black outline on every panel (e.g. the stationary one)",
+    )
     parser.add_argument("--xmax", type=float, default=None)
     parser.add_argument("--ncols", type=int, default=2)
     args = parser.parse_args()
@@ -70,16 +78,20 @@ def main() -> None:
     n = len(args.panel)
     ncols = min(args.ncols, n)
     nrows = math.ceil(n / ncols)
-    figsize = FIGURE_SIZE if n == 1 else (4.8 * ncols, 3.9 * nrows)
+    # Wider panels than FIGURE_SIZE: on a slide the grid is height-limited, so a wider aspect fills the column.
+    figsize = FIGURE_SIZE if n == 1 else (5.6 * ncols, 3.5 * nrows)
     fig, axes = plt.subplots(nrows, ncols, sharex=True, sharey=True, figsize=figsize, layout="constrained")
     axes = [axes] if n == 1 else list(axes.flat)
 
     ymax = 0.0
     xmax = args.xmax if args.xmax is not None else 0.0
+    bin_width = None
     try:
         for i, (ax, (label, table)) in enumerate(zip(axes, args.panel)):
             edges, means, stds = load_pdf(Path(table))
             width = edges[1] - edges[0]
+            if bin_width is None:
+                bin_width = width
             centers = [0.5 * (a + b) for a, b in zip(edges, edges[1:])]
             hi = [m + s for m, s in zip(means, stds)]
             series_color = SERIES[i % len(SERIES)]
@@ -107,6 +119,15 @@ def main() -> None:
         v0, v0_label = float(args.vline[0]), args.vline[1]
         for ax in axes[:n]:
             ax.axvline(v0, color="black", linestyle=":", zorder=1, label=v0_label)
+    if args.reference is not None:
+        ref_label, ref_table = args.reference
+        try:
+            ref_edges, ref_means, _ref_stds = load_pdf(Path(ref_table))
+        except (OSError, ValueError) as error:
+            parser.error(str(error))
+        for ax in axes[:n]:
+            ax.stairs(ref_means, ref_edges, baseline=None, color="black", linewidth=1.3, zorder=3, label=ref_label)
+        ymax = max(ymax, max(ref_means))
     if args.fit is not None:
         curve_v = [xmax * i / 400 for i in range(401)]
         curve_f = [mb_pdf(v, args.m, args.fit) for v in curve_v]
@@ -116,6 +137,13 @@ def main() -> None:
 
     axes[0].set_xlim(0.0, xmax)
     axes[0].set_ylim(0.0, ymax * 1.08)
+    # Minor x ticks at every bin edge so the bin width can be read off the figure
+    # (apply_academic_style turns minor ticks off, so this must come after it).
+    if bin_width is not None and bin_width > 0.0:
+        for ax in axes[:n]:
+            ax.xaxis.set_major_locator(MultipleLocator(5 * bin_width))
+            ax.xaxis.set_minor_locator(MultipleLocator(bin_width))
+            ax.tick_params(axis="x", which="minor", length=3)
     for i, ax in enumerate(axes[:n]):
         if i // ncols == nrows - 1 or i + ncols >= n:
             ax.set_xlabel(r"módulo de la velocidad $v$ (m/s)", labelpad=8)
