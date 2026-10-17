@@ -27,7 +27,7 @@ N_MAIN = 100
 N_LOW = 20
 TMAX = 100.0
 DT2 = 0.05
-REPS = 5
+REPS = 30
 SEEDS = list(range(1, REPS + 1))
 
 
