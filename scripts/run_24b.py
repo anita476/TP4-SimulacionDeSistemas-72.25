@@ -27,7 +27,7 @@ XO_MAX = R - r
 N_XO = 9
 TF = 2000.0
 DT2 = 0.05
-REPS = 5
+REPS = 30
 SEEDS = list(range(1, REPS + 1))
 N_VALUES = (20, 50, 100, 200, 300, 400)
 

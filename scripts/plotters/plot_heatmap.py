@@ -84,7 +84,7 @@ def main() -> None:
             data[j] = data[j] / baseline
 
     fig, ax = new_figure()
-    cmap = matplotlib.colormaps["YlOrRd"].copy()
+    cmap = matplotlib.colormaps["viridis_r" if args.per_row else "YlOrRd"].copy()
     cmap.set_bad("#f0f0f0")
     finite = data[np.isfinite(data)]
     mesh = ax.pcolormesh(
