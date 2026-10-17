@@ -24,7 +24,7 @@ T_REF = 30.0  # the tf of 2.1.b: Fu(T_REF) is what the 2.1.b outputs give litera
 DT2 = 0.05
 REPS = 10
 SEEDS = list(range(1, REPS + 1))
-N_RUNTIME = (50, 100, 200, 300, 400, 500, 650)
+N_RUNTIME = (10, 20, 30, 50, 100, 200, 300, 400, 500, 650)
 
 
 def packing_phi(n: int) -> float:
@@ -183,6 +183,7 @@ def plot_series(
     ylabel: str,
     ymax: float | None = None,
     logy: bool = False,
+    logx: bool = False,
 ) -> None:
     cmd = [
         sys.executable,
@@ -198,6 +199,8 @@ def plot_series(
         cmd += ["--ymax", f"{ymax:.10g}"]
     if logy:
         cmd += ["--logy"]
+    if logx:
+        cmd += ["--logx"]
     for label, path in series:
         if table_has_rows(path):
             cmd += ["--series", label, str(path)]
@@ -252,7 +255,7 @@ def main() -> None:
     t90_plot = OUT / "t90_t100_vs_phi.png"
     t90_plot_linear = OUT / "t90_t100_vs_phi_lineal.png"
     if time_series:
-        plot_series(t90_plot, time_series, r"densidad $\phi$", "tiempo (s)", logy=True)
+        plot_series(t90_plot, time_series, r"densidad $\phi$", "tiempo (s)", logy=True, logx=True)
         plot_series(t90_plot_linear, time_series, r"densidad $\phi$", "tiempo (s)")
     else:
         for path in (t90_plot, t90_plot_linear):

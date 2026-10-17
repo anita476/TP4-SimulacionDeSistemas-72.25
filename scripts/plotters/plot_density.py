@@ -41,6 +41,7 @@ def main() -> None:
     parser.add_argument("--ylabel", default="tiempo (s)")
     parser.add_argument("--ymax", type=float, default=None)
     parser.add_argument("--logy", action="store_true", help="logarithmic y axis")
+    parser.add_argument("--logx", action="store_true", help="logarithmic x axis")
     args = parser.parse_args()
     if args.ymax is not None and not (args.ymax > 0.0):
         parser.error("--ymax must be > 0")
@@ -86,6 +87,8 @@ def main() -> None:
         parser.error(str(error))
 
     style_axes(ax, args.xlabel, args.ylabel)
+    if args.logx:
+        ax.set_xscale("log")
     if args.logy:
         ax.set_yscale("log")
     else:
