@@ -1,3 +1,4 @@
+import argparse
 import math
 import os
 import shutil
@@ -27,7 +28,8 @@ ENERGY_TF = 30.0
 DT2 = 0.01
 DTS = (1e-5, 1e-4, 2e-4, 3e-4, 4e-4, 5e-4, 1e-2)
 DRIFT_LIMIT = 0.01
-N_RUNTIME = (50, 100, 200, 300, 400, 500, 650)
+# 10, 20 and 30 are the densities 2.4a adds below this sweep.
+N_RUNTIME = (10, 20, 30, 50, 100, 200, 300, 400, 500, 650)
 RUNTIME_TF = 30.0
 REPS = 10
 XO = 0.0175
@@ -62,6 +64,27 @@ def timed_seconds(cmd: list[str]) -> float:
         detail = (result.stderr or result.stdout).strip()
         raise RuntimeError(f"{' '.join(cmd)}\n{detail}")
     return elapsed
+
+
+def read_time_table(path: Path) -> dict[int, tuple[float, float]]:
+    if not path.is_file():
+        return {}
+    lines = [line.strip() for line in path.read_text(encoding="utf-8").splitlines() if line.strip() and not line.startswith("#")]
+    if not lines:
+        raise RuntimeError(f"{path}: empty")
+    if lines[0].split() != ["N", "t_mean", "t_std"]:
+        raise RuntimeError(f"{path}: expected header 'N t_mean t_std'")
+    rows: dict[int, tuple[float, float]] = {}
+    for line in lines[1:]:
+        n_text, mean_text, std_text = line.split()
+        n = int(n_text)
+        mean, std = float(mean_text), float(std_text)
+        if n in rows:
+            raise RuntimeError(f"{path}: repeated N={n}")
+        if mean < 0.0 or std < 0.0:
+            raise RuntimeError(f"{path}: N={n} times must be >= 0")
+        rows[n] = (mean, std)
+    return rows
 
 
 def write_table(path: Path, ns: list[int], means: list[float], stds: list[float]) -> None:
@@ -206,34 +229,39 @@ def run_tp3_times() -> Path:
     #     raise RuntimeError(f"missing {TP3_EXE}")
     TP3_EXE = find_executable(TP3_ROOT, "EventDrivenSim")
     path = OUT / "times_ed.txt"
+    previous = read_time_table(FIGS / "times_ed.txt")
     ns: list[int] = []
     means: list[float] = []
     stds: list[float] = []
     for n in N_RUNTIME:
-        times: list[float] = []
-        init = tp3_init(n)
-        for seed in SEEDS:
-            elapsed = timed_seconds(
-                [
-                    str(TP3_EXE),
-                    "-N",
-                    str(n),
-                    "-seed",
-                    str(seed),
-                    "-tmax",
-                    str(RUNTIME_TF),
-                    "-init",
-                    init,
-                    "--raw",
-                ]
-            )
-            times.append(elapsed)
-            print(f"TP3 1.1 N={n} seed={seed} init={init} {elapsed:.3f}s", flush=True)
-        mean, std = mean_std(times)
+        if n in previous:
+            mean, std = previous[n]
+            print(f"TP3 1.1 N={n} reuse mean={mean:.3f}s  std={std:.3f}s", flush=True)
+        else:
+            times: list[float] = []
+            init = tp3_init(n)
+            for seed in SEEDS:
+                elapsed = timed_seconds(
+                    [
+                        str(TP3_EXE),
+                        "-N",
+                        str(n),
+                        "-seed",
+                        str(seed),
+                        "-tmax",
+                        str(RUNTIME_TF),
+                        "-init",
+                        init,
+                        "--raw",
+                    ]
+                )
+                times.append(elapsed)
+                print(f"TP3 1.1 N={n} seed={seed} init={init} {elapsed:.3f}s", flush=True)
+            mean, std = mean_std(times)
+            print(f"  mean={mean:.3f}s  std={std:.3f}s", flush=True)
         ns.append(n)
         means.append(mean)
         stds.append(std)
-        print(f"  mean={mean:.3f}s  std={std:.3f}s", flush=True)
     write_table(path, ns, means, stds)
     return path
 
@@ -285,10 +313,41 @@ def animate(dt: float) -> None:
     )
 
 
+def run_part_b() -> None:
+    dt_path = FIGS / "dt.txt"
+    if not dt_path.is_file():
+        raise SystemExit(f"missing {dt_path}")
+    dt = float(dt_path.read_text(encoding="utf-8").strip())
+    if not (dt > 0.0):
+        raise SystemExit(f"{dt_path}: dt must be > 0, got {dt}")
+    print(
+        f"2.1b dt={dt:g} tf={RUNTIME_TF:g} xo={XO:g} reps={REPS} N={list(N_RUNTIME)}",
+        flush=True,
+    )
+    td = OUT / "times_td.txt"
+    saved = read_time_table(td)
+    if all(n in saved for n in N_RUNTIME):
+        print("2.1b reuse measured times", flush=True)
+    else:
+        td = run_tp4_times(dt)
+    ed = run_tp3_times()
+    plot_runtime(td, ed)
+    FIGS.mkdir(parents=True, exist_ok=True)
+    for name in ("tiempo_vs_N.png", "times_td.txt", "times_ed.txt"):
+        shutil.copy2(OUT / name, FIGS / name)
+    print("done", FIGS, flush=True)
+
+
 def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--only-b", action="store_true", help="re-run the 2.1b timing using dt.txt")
+    args = parser.parse_args()
     # if not EXE.is_file():
     #     raise SystemExit(f"missing {EXE}")
     OUT.mkdir(parents=True, exist_ok=True)
+    if args.only_b:
+        run_part_b()
+        return
     dts, dumps = run_energy()
     plot_energy(dts, dumps)
     dt = choose_dt(dts, dumps)

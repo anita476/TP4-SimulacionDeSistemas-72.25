@@ -121,7 +121,7 @@ def read_traj(path: str | Path) -> Traj:
     )
 
 
-def read_nu_series(path: str | Path) -> tuple[int, list[tuple[float, int]]]:
+def read_nu_series(path: str | Path, t_stop: float | None = None) -> tuple[int, list[tuple[float, int]]]:
     path_s = str(path)
     N: int | None = None
     frames: list[tuple[float, int]] = []
@@ -162,6 +162,9 @@ def read_nu_series(path: str | Path) -> tuple[int, list[tuple[float, int]]]:
                 t, nu = float(parts[1]), int(parts[3])
                 if not (0 <= nu <= N):
                     _fail(path_s, lineno, f"Nu={nu} is outside [0, {N}]")
+                # The frame past the cap is not part of the series, and its particles are not read.
+                if t_stop is not None and t > t_stop + 1e-9:
+                    break
                 skipped = 0
                 while skipped < N:
                     particle = fh.readline()

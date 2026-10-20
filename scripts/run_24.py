@@ -1,3 +1,4 @@
+import argparse
 import os
 import shutil
 import subprocess
@@ -209,7 +210,120 @@ def plot_series(
     subprocess.check_call(cmd)
 
 
+def cell(value: float) -> str:
+    if value != value:
+        return "nan"
+    return f"{value:.8g}"
+
+
+def reached_stats(values: list[float]) -> tuple[float, float]:
+    if not values:
+        return float("nan"), float("nan")
+    return mean_std(values)
+
+
+def summarize_cap(n: int) -> dict[str, float | int]:
+    t90s: list[float] = []
+    t100s: list[float] = []
+    fu_ref: list[float] = []
+    for seed in SEEDS:
+        path = dump_dir(n) / f"run_{seed}.txt"
+        if not path.is_file() or path.stat().st_size == 0:
+            raise RuntimeError(f"missing {path}")
+        N, series = read_nu_series(path, t_stop=T_REF)
+        if N != n:
+            raise RuntimeError(f"{path}: N={N}, expected {n}")
+        last_t, last_nu = series[-1]
+        if last_t + 1e-9 < T_REF and last_nu < n:
+            raise RuntimeError(f"{path}: ends at t={last_t} Nu={last_nu}, before t={T_REF:g}")
+        fu_ref.append(nu_at(series, T_REF) / n)
+        t90 = t90_of_nu(n, series)
+        t100 = t100_of_nu(n, series)
+        if t90 is not None:
+            t90s.append(t90)
+        if t100 is not None:
+            t100s.append(t100)
+    t90_mean, t90_std = reached_stats(t90s)
+    t100_mean, t100_std = reached_stats(t100s)
+    fu30_mean, fu30_std = mean_std(fu_ref)
+    return {
+        "N": n,
+        "phi": packing_phi(n),
+        "n_t90": len(t90s),
+        "n_t100": len(t100s),
+        "t90_mean": t90_mean,
+        "t90_std": t90_std,
+        "t100_mean": t100_mean,
+        "t100_std": t100_std,
+        "fu30_mean": fu30_mean,
+        "fu30_std": fu30_std,
+    }
+
+
+def write_cap_report(path: Path, rows: list[dict[str, float | int]]) -> None:
+    with path.open("w", encoding="utf-8") as fh:
+        fh.write("N phi n_t90 t90_mean t90_std n_t100 t100_mean t100_std fu30_mean fu30_std\n")
+        for row in rows:
+            fh.write(
+                f"{row['N']} {row['phi']:.10g} {row['n_t90']} {cell(float(row['t90_mean']))} {cell(float(row['t90_std']))} "
+                f"{row['n_t100']} {cell(float(row['t100_mean']))} {cell(float(row['t100_std']))} "
+                f"{row['fu30_mean']:.8g} {row['fu30_std']:.8g}\n"
+            )
+
+
+def write_reached(path: Path, rows: list[dict[str, float | int]], count_key: str, mean_key: str, std_key: str) -> None:
+    with path.open("w", encoding="utf-8") as fh:
+        fh.write("N phi t_mean t_std\n")
+        for row in rows:
+            if row[count_key] == 0:
+                continue
+            fh.write(f"{row['N']} {row['phi']:.10g} {row[mean_key]:.8g} {row[std_key]:.8g}\n")
+
+
+def write_cap() -> None:
+    # Means use only the realizations that reach the threshold by t = 30 s.
+    rows: list[dict[str, float | int]] = []
+    for n in N_RUNTIME:
+        row = summarize_cap(n)
+        rows.append(row)
+        print(
+            f"  cap N={n} t90 {row['n_t90']}/{REPS} t100 {row['n_t100']}/{REPS} Fu(30)={row['fu30_mean']:.3f}",
+            flush=True,
+        )
+    OUT.mkdir(parents=True, exist_ok=True)
+    t90_path = OUT / "t90_vs_phi_tf30.txt"
+    t100_path = OUT / "t100_vs_phi_tf30.txt"
+    write_reached(t90_path, rows, "n_t90", "t90_mean", "t90_std")
+    write_reached(t100_path, rows, "n_t100", "t100_mean", "t100_std")
+    write_cap_report(OUT / "report_tf30.txt", rows)
+    series: list[tuple[str, Path]] = []
+    if data_rows(t90_path) >= 1:
+        series.append((r"$t_{90}$", t90_path))
+    if data_rows(t100_path) >= 1:
+        series.append((r"$t_{100}$", t100_path))
+    plot_path = OUT / "t90_t100_vs_phi_tf30.png"
+    if series:
+        plot_series(plot_path, series, r"densidad $\phi$", "tiempo (s)")
+    elif plot_path.is_file():
+        plot_path.unlink()
+    FIGS.mkdir(parents=True, exist_ok=True)
+    for name in ("t90_vs_phi_tf30.txt", "t100_vs_phi_tf30.txt", "t90_t100_vs_phi_tf30.png", "report_tf30.txt"):
+        src = OUT / name
+        dest = FIGS / name
+        if src.is_file():
+            shutil.copy2(src, dest)
+        elif dest.is_file():
+            dest.unlink()
+    print("cap done", FIGS, flush=True)
+
+
 def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--cap-only", action="store_true", help="t90 and t100 of the long runs, cut at t=30 s")
+    args = parser.parse_args()
+    if args.cap_only:
+        write_cap()
+        return
     if not DT_FILE.is_file():
         raise SystemExit(f"missing {DT_FILE}")
     dt = read_dt()
@@ -277,6 +391,7 @@ def main() -> None:
             shutil.copy2(src, dest)
         elif dest.is_file():
             dest.unlink()
+    write_cap()
     print("done", FIGS, flush=True)
 
 
