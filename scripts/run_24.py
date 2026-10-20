@@ -296,6 +296,15 @@ def write_cap() -> None:
     write_reached(t90_path, rows, "n_t90", "t90_mean", "t90_std")
     write_reached(t100_path, rows, "n_t100", "t100_mean", "t100_std")
     write_cap_report(OUT / "report_tf30.txt", rows)
+    fu_path = OUT / "fu30_vs_phi.txt"
+    write_observable(fu_path, rows, "fu30_mean", "fu30_std")
+    plot_series(
+        OUT / "fu30_vs_phi.png",
+        [(r"$F_u(t = 30\,\mathrm{s})$", fu_path)],
+        r"densidad $\phi$",
+        r"fracción usada $F_u$",
+        ymax=1.05,
+    )
     series: list[tuple[str, Path]] = []
     if data_rows(t90_path) >= 1:
         series.append((r"$t_{90}$", t90_path))
@@ -307,7 +316,14 @@ def write_cap() -> None:
     elif plot_path.is_file():
         plot_path.unlink()
     FIGS.mkdir(parents=True, exist_ok=True)
-    for name in ("t90_vs_phi_tf30.txt", "t100_vs_phi_tf30.txt", "t90_t100_vs_phi_tf30.png", "report_tf30.txt"):
+    for name in (
+        "t90_vs_phi_tf30.txt",
+        "t100_vs_phi_tf30.txt",
+        "t90_t100_vs_phi_tf30.png",
+        "report_tf30.txt",
+        "fu30_vs_phi.txt",
+        "fu30_vs_phi.png",
+    ):
         src = OUT / name
         dest = FIGS / name
         if src.is_file():
