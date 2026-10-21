@@ -1,0 +1,60 @@
+@startuml
+!pragma layout smetana
+skinparam classAttributeIconSize 0
+skinparam defaultFontSize 22
+skinparam shadowing false
+skinparam dpi 150
+hide empty members
+
+class OscillatorEngine <<module>> {
+  +parse_method(name): Method
+  +method_name(method): string
+  +integrate_oscillator(osc, run, out, analytic_out): void
+}
+
+class Oscillator {
+  +m, k, gamma, A: double
+  +acceleration(x, v): double
+  +omega(): double
+  +analytic(t): double
+  +x0(): double
+  +v0(): double
+}
+
+class OscillatorRun {
+  +method: Method
+  +dt, tf: double
+}
+
+enum Method {
+  EulerPC
+  Verlet
+  VelocityVerlet
+  Beeman
+  VelocityVerletVanilla
+}
+
+class Integrators <<module>> {
+  +oscillator_acceleration(state, r, v): double
+  +euler_predictor_corrector::oscillator_step(state, dt): void
+  +verlet::oscillator_step(state, dt): void
+  +velocity_verlet::oscillator_step(state, dt): void
+  +velocity_verlet_vanilla::oscillator_step(state, dt): void
+  +beeman::oscillator_step(state, dt): void
+}
+
+class ParticleOscillator {
+  +m, k, gamma: double
+  +r, r_old, vx, vx_old: double
+  +a_current, a_old: double
+}
+
+OscillatorEngine ..> Oscillator
+OscillatorEngine ..> OscillatorRun
+OscillatorEngine ..> Integrators
+OscillatorEngine ..> ParticleOscillator
+OscillatorRun --> Method
+Integrators ..> ParticleOscillator
+Oscillator -[hidden]right- OscillatorRun
+OscillatorRun -[hidden]right- Integrators
+@enduml

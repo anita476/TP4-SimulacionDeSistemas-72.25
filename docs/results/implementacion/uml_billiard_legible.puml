@@ -1,0 +1,66 @@
+@startuml
+!pragma layout smetana
+skinparam classAttributeIconSize 0
+skinparam defaultFontSize 22
+skinparam shadowing false
+skinparam dpi 150
+hide empty members
+
+class Generator <<module>> {
+  +packing_fraction(cfg): double
+  +generate_particles(cfg): vector<Particle>
+}
+
+class BilliardEngine <<module>> {
+  +integrate_billiard(particles, obstacles, run, out): void
+}
+
+class ObstacleLoader <<module>> {
+  +validate_obstacles(obstacles, R, r): void
+  +load_obstacles(path, R, r): vector<Obstacle>
+}
+
+class Particle {
+  +x, y, vx, vy, r, m: double
+  +used: int
+}
+
+class CellGrid {
+  -side_: double
+  -cells_per_side_: int
+  -cells_: vector<vector<int>>
+  +cells_per_side(): int
+  +cell_coord(shifted): int
+  +cell_index(cx, cy): int
+  +insert(id, x, y): void
+  +clear(): void
+  +cell(index): vector<int>
+}
+
+class Geometry <<utilities>> {
+  +in_contact(dx, dy, sum_radii): bool
+  +disc_inside_circle(x, y, radius, R): bool
+}
+
+class BilliardRun {
+  +R, dt, tf: double
+  +n: int
+  +until_used: bool
+}
+
+class Obstacle {
+  +x, y, radius: double
+}
+
+Generator ..> Particle
+BilliardEngine ..> Particle
+BilliardEngine ..> CellGrid
+BilliardEngine ..> Geometry
+BilliardEngine ..> BilliardRun
+BilliardEngine ..> Obstacle
+ObstacleLoader ..> Obstacle
+Particle -[hidden]right- CellGrid
+CellGrid -[hidden]right- Geometry
+Geometry -[hidden]right- BilliardRun
+BilliardRun -[hidden]right- Obstacle
+@enduml
