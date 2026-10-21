@@ -15,10 +15,37 @@
     \end{columns}
 \end{frame}
 
-\begin{frame}{Velocity Verlet Modificado}
-
-
+\begin{frame}[fragile]{Variantes Velocity Verlet}
+  \centering
+    \begin{columns}
+              \begin{column}{0.50\textwidth}
+                \centering{\textbf{Velocity Verlet Modificado}}\par
+                \begin{algorithmic}[1]
+                  \Require $r(t),\, v(t)$
+                  \Ensure $r(t+\Delta t),\, v(t+\Delta t)$
+                  \State $a(t) \gets \acc\big(r(t),\, v(t)\big)$
+                  \State $r(t+\Delta t) \gets r(t) + v(t)\,\Delta t + \tfrac{1}{2}\,a(t)\,\Delta t^2$
+                  \State $v(t+\tfrac{\Delta t}{2}) \gets v(t) + \tfrac{1}{2}\,a(t)\,\Delta t$
+                  \State $\tilde v(t+\Delta t) \gets v(t) + a(t)\,\Delta t$ \Comment{\textbf{predicción}}
+                  \State $a(t+\Delta t) \gets \acc\big(r(t+\Delta t),\, \tilde v(t+\Delta t)\big)$
+                  \State $v(t+\Delta t) \gets v(t+\tfrac{\Delta t}{2}) + \tfrac{1}{2}\,a(t+\Delta t)\,\Delta t$
+                \end{algorithmic}
+              \end{column}
+              \begin{column}{0.50\textwidth}
+                \centering{\textbf{Velocity Verlet Vanilla}}\par
+                \begin{algorithmic}[1]
+                  \Require $r(t),\, v(t)$
+                  \Ensure $r(t+\Delta t),\, v(t+\Delta t)$
+                  \State $a(t) \gets \acc\big(r(t),\, v(t)\big)$
+                  \State $r(t+\Delta t) \gets r(t) + v(t)\,\Delta t + \tfrac{1}{2}\,a(t)\,\Delta t^2$
+                  \State $v(t+\tfrac{\Delta t}{2}) \gets v(t) + \tfrac{1}{2}\,a(t)\,\Delta t$
+                  \State $a(t+\Delta t) \gets \acc\big(r(t+\Delta t),\, v(t)\big)$ \Comment{$v(t)$ paso actual}
+                  \State $v(t+\Delta t) \gets v(t+\tfrac{\Delta t}{2}) + \tfrac{1}{2}\,a(t+\Delta t)\,\Delta t$
+                \end{algorithmic}
+              \end{column}
+            \end{columns}
 \end{frame}
+
 
 \begin{frame}{$F_u$ en función de la densidad con corte a $t = 30$}
   \begin{cols}
