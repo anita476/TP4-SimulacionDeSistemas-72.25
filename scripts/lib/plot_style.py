@@ -8,11 +8,12 @@ FIGURE_SIZE = (6.5, 5.4)
 SAVE_DPI = 300
 
 BLUE = "#0072B2"
-VERMILLION = "#D55E00"
+VERMILLION = "#FF7003"
 GREEN = "#009E73"
 PURPLE = "#CC79A7"
-ORANGE = "#E69F00"
-SERIES = (BLUE, VERMILLION, GREEN, PURPLE, ORANGE)
+VIOLET = "#7723B8"
+YELLOW = "#FFF04C"
+SERIES = (BLUE, VERMILLION, GREEN, PURPLE, VIOLET,YELLOW)
 MARKERS = ("o", "s", "D", "^", "v")
 
 _CORNERS = ("upper right", "upper left", "lower right", "lower left")
@@ -64,7 +65,20 @@ def new_figure():
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
-    return plt.subplots(figsize=FIGURE_SIZE, layout="constrained")
+    fig, ax = plt.subplots(figsize=FIGURE_SIZE, layout="constrained")
+    fig.get_layout_engine().set(h_pad=0.1)
+    return fig, ax
+
+
+def viridis_colors(count: int) -> tuple[str, ...]:
+    if count <= 0:
+        return ()
+    if count == 1:
+        positions = (0.5,)
+    else:
+        positions = tuple(0.08 + 0.82 * index / (count - 1) for index in range(count))
+    cmap = matplotlib.colormaps["viridis"]
+    return tuple(matplotlib.colors.to_hex(cmap(position)) for position in positions)
 
 
 def style_axes(ax, xlabel: str, ylabel: str) -> None:
@@ -192,5 +206,3 @@ def save_figure(fig, path: Path, extra: tuple = ()) -> None:
     )
     plt.close(fig)
     print(f"wrote {path}")
-
-

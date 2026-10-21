@@ -24,4 +24,8 @@ namespace euler_predictor_corrector {
 void oscillator_step(ParticleOscillator &, double dt);
 
 }
+namespace velocity_verlet_vanilla {
+void oscillator_step(ParticleOscillator &, double dt);
+
+}
 } // namespace integrators

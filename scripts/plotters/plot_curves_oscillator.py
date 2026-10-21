@@ -7,7 +7,7 @@ from matplotlib.ticker import ScalarFormatter
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "lib"))
 
-from plot_style import SERIES, new_figure, place_legend_below, save_figure, style_axes
+from plot_style import new_figure, place_legend_below, save_figure, style_axes, viridis_colors
 
 CURVES = (
     ("euler_pc", "Euler predictor-corrector", "--euler-pc", 3),
@@ -75,6 +75,8 @@ def main() -> None:
     if not any(paths for _key, _label, _columns, path_groups in selected for paths in path_groups):
         parser.error("provide at least one trajectory option, e.g. --verlet trajectory.txt")
 
+    curve_count = sum(len(group) for _key, _label, _columns, path_groups in selected for group in path_groups)
+    colors = viridis_colors(curve_count)
     fig, ax = new_figure()
     curve_index = 0
     try:
@@ -83,7 +85,7 @@ def main() -> None:
                 for path in group:
                     times, positions = read_curve(path, columns, args.t_first, args.t_last)
                     curve_label = label if len(group) == 1 and len(path_groups) == 1 else f"{label}: {path.stem}"
-                    ax.plot(times, positions, color=SERIES[curve_index % len(SERIES)],
+                    ax.plot(times, positions, color=colors[curve_index],
                             label=curve_label, zorder=3)
                     curve_index += 1
     except (OSError, ValueError) as error:

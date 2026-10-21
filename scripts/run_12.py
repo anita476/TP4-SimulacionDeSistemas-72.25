@@ -10,7 +10,7 @@ sys.path.insert(0, str(ROOT / "scripts" / "lib"))
 
 from paths import find_executable
 
-METHODS = ("euler_pc", "verlet", "velocity_verlet", "beeman")
+METHODS = ("euler_pc", "verlet", "velocity_verlet", "beeman", "velocity_verlet_vanilla")
 MAX_DT_VALUES = 1_000_000
 MAX_INTEGRATION_STEPS = 1_000_000_000
 

@@ -1,0 +1,15 @@
+-> regla del codo par eleccion deriva 
+
+-> a ojo ! 
+-> quitar diapo N=20 -> repite info 
+
+-> 2.3 definir que tomamos como estacionario  -> temperatura mas o menos cte .. 
+-> 2.4 probar con 10, 1 particula para vez 
+
+-> 2.4 hay una dependencia entre x0 y el n -> sino x0 daria siempre el mismo valor 
+-> normalizar por x0 y agregar un nuevo heatmap si da algo interesante 
+
+
+
+-> 1.2 curvas posición poner directamente la resta ! en vez del detalle 
+-> 1.2 revisar beeman y verlet -> comparar ecms para ver si es correcto 

@@ -34,9 +34,37 @@ pip install -r scripts/requirements.txt
 
 ### Oscilador 
 
-Para ejecutar las runs del oscilador:
+Para ejecutar las runs del oscilador cada media década:
 ```bash
 python scripts/run_12.py --gamma 100 --k 1.0e4 --m 70 \
-    --tf 5 --A 1 --out_dir docs/results/1.2 --dt-max 1e-2 \ 
-    --dt-min 1e-20 --dt-step 1e1 --runs 100
+    --tf 5 --A 1 --out_dir docs/results/1.2 --dt-max 1e-2 \
+    --dt-min 1e-5 --dt-step 0.31622776601683794 --runs 1 # --dt-step 1e-0.5
 ```
+
+Cada un cuarto de década: 
+
+```bash
+python scripts/run_12.py --gamma 100 --k 1.0e4 --m 70 --tf 5 --A 1 --out_dir docs/results/1.2 --dt-max 1e-2 --dt-min 1e-6 --dt-step 0.5623413252 --runs 1
+```
+
+## Gráficos 
+
+#### Curvas
+
+Para graficar la diferencia entre la posición de cada método y la solución
+analítica, pasar las trayectorias de los métodos que se quieran comparar:
+
+```bash
+python scripts/plotters/plot_curves_difference.py --output docs/results/1.2/plot_curves_difference.png --euler_pc docs/results/1.2/euler_pc/euler_pc_0.01_1.txt --verlet docs/results/1.2/verlet/verlet_0.01_1.txt --velocity_verlet docs/results/1.2/velocity_verlet/velocity_verlet_0.01_1.txt --beeman docs/results/1.2/beeman/beeman_0.01_1.txt --velocity_verlet_vanilla docs/results/1.2/velocity_verlet_vanilla/velocity_verlet_vanilla_0.01_1.txt
+```
+
+#### Curvas ECM 
+
+```bash
+ python scripts/plotters/plot_ecm.py \
+    --input_dir docs/results/1.2 \
+    --output docs/results/1.2/plot_ecm_fourths.png
+```
+
+Para incluir solo algunos métodos, agregar los flags deseados (por ejemplo,
+`--beeman --verlet`). Si no se especifican flags de método se incluyen todos

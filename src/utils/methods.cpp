@@ -80,7 +80,6 @@ void oscillator_step(ParticleOscillator &oscillator, double dt) {
   const double a_new = oscillator_acceleration(oscillator, r_new, v_pred);
 
   // paso intermedio 2: v(t+dt) = v(t+dt/2) + a(t+dt) dt/2
-  // (equivale a v + dt/2 (a(t) + a(t+dt)))
   oscillator.vx = v_half + 0.5 * dt * a_new;
   oscillator.r = r_new;
 }
@@ -111,3 +110,31 @@ void oscillator_step(ParticleOscillator &oscillator, double dt) {
 }
 
 } // namespace integrators::euler_predictor_corrector
+
+namespace integrators::velocity_verlet_vanilla {
+
+void oscillator_step(ParticleOscillator &oscillator, double dt) {
+
+  const double r = oscillator.r;
+  const double v = oscillator.vx;
+
+  // calculo aceleración
+  const double a = oscillator_acceleration(oscillator, r, v);
+
+  // r(t+dt) = r(t) + dt v(t) + dt^2/2 a(t)
+  const double r_new = r + dt * v + 0.5 * dt * dt * a;
+
+  // Paso intermedio 1: v(t+dt/2) = v(t) + a(t) dt/2
+  const double v_half = v + 0.5 * dt * a;
+
+  // sin predicción ! uso la v del paso anterior
+
+  // a(t+dt) con r(t+dt) y v predicha
+  const double a_new = oscillator_acceleration(oscillator, r_new, v);
+
+  // paso intermedio 2: v(t+dt) = v(t+dt/2) + a(t+dt) dt/2
+  oscillator.vx = v_half + 0.5 * dt * a_new;
+  oscillator.r = r_new;
+}
+
+} // namespace integrators::velocity_verlet_vanilla

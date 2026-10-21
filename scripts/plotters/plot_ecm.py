@@ -7,13 +7,14 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "lib"))
 
 from metrics import mean_std, trajectory_ecm
-from plot_style import SERIES, new_figure, save_figure, style_axes
+from plot_style import new_figure, save_figure, style_axes, viridis_colors
 
 METHODS = {
     "euler_pc": "Euler predictor-corrector",
     "verlet": "Verlet",
     "velocity_verlet": "Velocity Verlet",
     "beeman": "Beeman",
+    "velocity_verlet_vanilla": "Velocity Verlet Vanilla"
 }
 
 
@@ -21,14 +22,19 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Mean oscillator ECM vs dt for each integration method")
     parser.add_argument("--input_dir", type=Path, required=True, help="run_12.py output directory")
     parser.add_argument("--output", type=Path, required=True, help="output plot path")
+    for method in METHODS:
+        parser.add_argument(f"--{method}", action="store_true", help=f"include {METHODS[method]} in the plot")
     args = parser.parse_args()
+    selected_methods = [method for method in METHODS if getattr(args, method)]
+    if not selected_methods:
+        selected_methods = list(METHODS)
 
     if not args.input_dir.is_dir():
         parser.error(f"input directory does not exist: {args.input_dir}")
 
-    errors: dict[str, dict[Decimal, list[float]]] = {method: {} for method in METHODS}
+    errors: dict[str, dict[Decimal, list[float]]] = {method: {} for method in selected_methods}
     try:
-        for method in METHODS:
+        for method in selected_methods:
             method_dir = args.input_dir / method
             if not method_dir.is_dir():
                 continue
@@ -52,9 +58,20 @@ def main() -> None:
     except (OSError, ValueError) as error:
         parser.error(str(error))
 
+    print("dt\tmethod\tecm_mean")
+    for dt in sorted({dt for series in errors.values() for dt in series}):
+        for method in selected_methods:
+            series = errors[method]
+            if dt in series:
+                ecm_mean, _ecm_std = mean_std(series[dt])
+                print(f"{dt}\t{method}\t{ecm_mean:.10g}")
+
     fig, ax = new_figure()
+    colors = viridis_colors(len(METHODS))
     plotted = False
     for index, (method, label) in enumerate(METHODS.items()):
+        if method not in selected_methods:
+            continue
         series = errors[method]
         if not series:
             continue
@@ -70,14 +87,17 @@ def main() -> None:
             parser.error(f"{method}: dt, mean ECM and standard deviation must be finite and valid for logarithmic axes")
         lower = [mean - std if mean > std else math.nan for mean, std in zip(means, stds)]
         upper = [mean + std for mean, std in zip(means, stds)]
-        ax.fill_between(dts, lower, upper, color=SERIES[index], alpha=0.18, linewidth=0, zorder=2)
+        ax.fill_between(dts, lower, upper, color=colors[index], alpha=0.18, linewidth=0, zorder=2)
         ax.plot(
             dts,
             means,
-            color=SERIES[index],
-            marker="o",
+            color=colors[index],
+            marker={"beeman": "^", "velocity_verlet": "D"}.get(method, "o"),
+            markersize=8,
             markeredgecolor="black",
             markeredgewidth=0.6,
+            alpha=1,
+            linestyle="--" if method == "beeman" else "-",
             label=label,
             zorder=3,
         )
@@ -87,7 +107,7 @@ def main() -> None:
         parser.error(f"no run_12.py trajectory files found under {args.input_dir}")
     ax.set_xscale("log")
     ax.set_yscale("log")
-    style_axes(ax, r"paso temporal $dt$ (s)", r"ECM ($\mathrm{m}^2$)")
+    style_axes(ax, r"$dt$ (s)", r"ECM ($\mathrm{m}^2$)")
     fig.legend(*ax.get_legend_handles_labels(), loc="outside lower center", ncol=2)
     save_figure(fig, args.output)
 
