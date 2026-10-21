@@ -1,15 +1,54 @@
-\begin{frame}{Animaciones del sistema}
-  \begin{columns}[T]
-    \begin{column}{0.48\textwidth}
-      \centering{\small $N = 100$}\par
-      \includegraphics[width=\linewidth,height=0.78\textheight,keepaspectratio]{anim_N100.png}
-    \end{column}
-    \begin{column}{0.48\textwidth}
-      \centering{\small $N = 20$}\par
-      \includegraphics[width=\linewidth,height=0.78\textheight,keepaspectratio]{anim_N20.png}
-    \end{column}
-  \end{columns}
-\end{frame}
+\ifshowvideo
+    \begin{frame}{Animaciones del sistema}
+      \begin{columns}[T]
+        \begin{column}{0.50\textwidth}
+          \centering{\small $N=100$}\par
+          \includemedia[
+            width=0.8\linewidth,
+            height=0.9\linewidth,
+            activate=onclick,
+            addresource=anim_N100.mp4,
+            flashvars={
+                    source=anim_N100.mp4
+                    &autoPlay=false
+                    &loop=true
+            }
+            ]{\includegraphics[width=0.8\linewidth]{anim_N100.png}}{VPlayer.swf}
+        \end{column}\href{}{}
+        \begin{column}{0.50\textwidth}
+          \centering{\small $N=20$}\par
+          \includemedia[
+            width=0.8\linewidth,
+            height=0.9\linewidth,
+            activate=onclick,
+            addresource=anim_N20.mp4,
+            flashvars={
+                    source=anim_N20.mp4
+                    &autoPlay=false
+                    &loop=true
+            }
+            ]{\includegraphics[width=0.8\linewidth]{anim_N20.png}}{VPlayer.swf}
+        \end{column}
+      \end{columns}
+    \end{frame}
+\else 
+    \begin{frame}[fragile]{Animaciones del sistema}
+      \begin{columns}[T]
+        \begin{column}{0.48\textwidth}
+          \centering{\small $N=100$}\par\smallskip
+          \includegraphics[width=\linewidth,height=0.55\textheight,keepaspectratio]{anim_N100.png}\par\smallskip{\scriptsize\url{https://youtube.com/shorts/KwC-H4l5apM?feature=share}}
+        \end{column}
+    \hfill
+        \begin{column}{0.48\textwidth}
+        \centering{\small $N=20$}\par\smallskip
+        \includegraphics[width=\linewidth,height=0.55\textheight,keepaspectratio]{anim_N20.png}\par\smallskip
+            {\scriptsize\url{MISSING}}
+        \end{column}
+      \end{columns}
+    \end{frame}
+    
+\fi
+
 
 \begin{frame}{Fracción de partículas usadas}
   \begin{cols}
