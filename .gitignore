@@ -101,3 +101,4 @@ docs/extra
 
 # these runs are too expensive 
 docs/results/1.2/**/*.txt
+*/main.pdf

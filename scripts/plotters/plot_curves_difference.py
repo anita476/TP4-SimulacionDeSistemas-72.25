@@ -5,7 +5,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "lib"))
 
-from plot_style import SERIES, new_figure, place_legend_below, save_figure, style_axes
+from plot_style import SERIES, new_figure, save_figure, style_axes
 
 METHODS = (
     ("euler_pc", "Euler predictor-corrector"),
@@ -106,7 +106,8 @@ def main() -> None:
     style_axes(ax, "tiempo $t$ (s)", r"$x_{\mathrm{método}} - x_{\mathrm{analítica}}$ (m)")
     if args.t_first is not None or args.t_last is not None:
         ax.set_xlim(left=args.t_first, right=args.t_last)
-    place_legend_below(ax, ncol=min(curve_index, 3))
+    handles, labels = ax.get_legend_handles_labels()
+    fig.legend(handles, labels, loc="outside lower center", ncol=min(curve_index, 2))
     save_figure(fig, args.output)
 
 
