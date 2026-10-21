@@ -1,0 +1,68 @@
+@startuml
+left to right direction
+skinparam classAttributeIconSize 0
+
+
+enum Method {
+  EulerPC
+  Verlet
+  VelocityVerlet
+  Beeman
+  VelocityVerletVanilla
+}
+
+class Oscillator {
+  +m: double
+  +k: double
+  +gamma: double
+  +A: double
+  +acceleration(x, v): double
+  +omega(): double
+  +analytic(t): double
+  +x0(): double
+  +v0(): double
+}
+
+class OscillatorRun {
+  +method: Method
+  +dt: double
+  +tf: double
+}
+
+class ParticleOscillator {
+  +gamma: double
+  +k: double
+  +m: double
+  +vx: double
+  +vx_old: double
+  +r: double
+  +r_old: double
+  +a_current: double
+  +a_old: double
+}
+
+class OscillatorEngine <<module>> {
+  +parse_method(name): Method
+  +method_name(method): string
+  +integrate_oscillator(osc, run, out, analytic_out): void
+}
+
+class Integrators <<module>> {
+  +oscillator_acceleration(state, r, v): double
+  +verlet::oscillator_step(state, dt): void
+  +beeman::oscillator_step(state, dt): void
+  +velocity_verlet::oscillator_step(state, dt): void
+  +euler_predictor_corrector::oscillator_step(state, dt): void
+  +velocity_verlet_vanilla::oscillator_step(state, dt): void
+}
+
+
+OscillatorRun --> Method : selecciona
+OscillatorEngine ..> Oscillator : parametros y solucion analitica
+OscillatorEngine ..> OscillatorRun : recibe configuracion
+OscillatorEngine ..> ParticleOscillator : inicializa estado
+OscillatorEngine ..> Integrators : selecciona y ejecuta paso
+Integrators ..> ParticleOscillator : actualiza estado
+
+
+@enduml

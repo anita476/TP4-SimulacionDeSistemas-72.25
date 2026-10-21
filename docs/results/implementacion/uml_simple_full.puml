@@ -1,0 +1,138 @@
+@startuml
+left to right direction
+skinparam classAttributeIconSize 0
+
+enum Placement {
+  Random
+  Hex
+}
+
+enum Method {
+  EulerPC
+  Verlet
+  VelocityVerlet
+  Beeman
+  VelocityVerletVanilla
+}
+
+class Particle {
+  +x: double
+  +y: double
+  +r: double
+  +vx: double
+  +vy: double
+  +m: double
+  +used: int
+}
+
+class Obstacle {
+  +x: double
+  +y: double
+  +radius: double
+}
+
+class BilliardRun {
+  +R: double
+  +dt: double
+  +tf: double
+  +n: int
+  +until_used: bool
+}
+
+class CellGrid {
+  -side_: double
+  -cells_per_side_: int
+  -cells_: vector<vector<int>>
+  +cells_per_side(): int
+  +cell_coord(shifted): int
+  +cell_index(cx, cy): int
+  +insert(id, x, y): void
+  +clear(): void
+  +cell(index): vector<int>
+}
+
+class Generator <<module>> {
+  +packing_fraction(cfg): double
+  +generate_particles(cfg): vector<Particle>
+}
+
+class BilliardEngine <<module>> {
+  +integrate_billiard(particles, obstacles, run, out): void
+}
+
+class ObstacleLoader <<module>> {
+  +validate_obstacles(obstacles, R, particle_radius): void
+  +load_obstacles(path, R, particle_radius): vector<Obstacle>
+}
+
+class Geometry <<utilities>> {
+  +in_contact(dx, dy, sum_radii): bool
+  +disc_inside_circle(x, y, radius, R): bool
+}
+
+class Oscillator {
+  +m: double
+  +k: double
+  +gamma: double
+  +A: double
+  +acceleration(x, v): double
+  +omega(): double
+  +analytic(t): double
+  +x0(): double
+  +v0(): double
+}
+
+class OscillatorRun {
+  +method: Method
+  +dt: double
+  +tf: double
+}
+
+class ParticleOscillator {
+  +gamma: double
+  +k: double
+  +m: double
+  +vx: double
+  +vx_old: double
+  +r: double
+  +r_old: double
+  +a_current: double
+  +a_old: double
+}
+
+class OscillatorEngine <<module>> {
+  +parse_method(name): Method
+  +method_name(method): string
+  +integrate_oscillator(osc, run, out, analytic_out): void
+}
+
+class Integrators <<module>> {
+  +oscillator_acceleration(state, r, v): double
+  +verlet::oscillator_step(state, dt): void
+  +beeman::oscillator_step(state, dt): void
+  +velocity_verlet::oscillator_step(state, dt): void
+  +euler_predictor_corrector::oscillator_step(state, dt): void
+  +velocity_verlet_vanilla::oscillator_step(state, dt): void
+}
+
+Generator ..> Particle : genera
+Generator ..> CellGrid : comprueba superposiciones
+Generator ..> Geometry : valida geometria
+
+BilliardEngine ..> Particle : integra
+BilliardEngine ..> Obstacle : detecta contactos
+BilliardEngine ..> BilliardRun : usa parametros
+BilliardEngine ..> CellGrid : busca vecinos
+BilliardEngine ..> Geometry : calcula contactos
+ObstacleLoader ..> Obstacle : carga y valida
+ObstacleLoader ..> Geometry : valida contencion y contacto
+
+OscillatorRun --> Method : selecciona
+OscillatorEngine ..> Oscillator : parametros y solucion analitica
+OscillatorEngine ..> OscillatorRun : recibe configuracion
+OscillatorEngine ..> ParticleOscillator : inicializa estado
+OscillatorEngine ..> Integrators : selecciona y ejecuta paso
+Integrators ..> ParticleOscillator : actualiza estado
+
+
+@enduml

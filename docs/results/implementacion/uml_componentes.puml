@@ -1,0 +1,37 @@
+@startuml
+title Componentes del motor de simulacion
+left to right direction
+skinparam componentStyle rectangle
+
+component "table_main.cpp\nTimeDrivenSimTable" as TableMain
+component "oscillator_main.cpp\nTimeDrivenSimOscillator" as OscillatorMain
+
+component "generator.cpp\nGeneracion de particulas" as Generator
+component "billiard.cpp\nIntegracion del billar" as Billiard
+component "obstacle.cpp\nCarga y validacion" as ObstacleLoader
+component "integrators.cpp\nIntegracion del oscilador" as OscillatorIntegrator
+component "methods.cpp\nEsquemas numericos" as Methods
+
+component "geometry.hpp\nUtilidades geometricas" as Geometry
+component "cell_grid.hpp\nRejilla espacial" as CellGrid
+component "dump.hpp\nSalida de trayectorias" as Dump
+component "argparse\nLibreria externa" as Argparse
+
+TableMain --> Generator : configura y genera
+TableMain --> Billiard : ejecuta simulacion
+TableMain --> ObstacleLoader : carga obstaculos
+TableMain --> Dump : escribe cabecera
+TableMain --> Argparse : procesa argumentos
+
+Billiard --> CellGrid : busca contactos
+Billiard --> Geometry : calcula contactos
+Billiard --> Dump : escribe frames
+Generator --> CellGrid : evita superposiciones
+Generator --> Geometry : valida posiciones
+ObstacleLoader --> Geometry : valida obstaculos
+
+OscillatorMain --> OscillatorIntegrator : integra oscilador
+OscillatorMain --> Argparse : procesa argumentos
+OscillatorIntegrator --> Methods : selecciona metodo
+
+@enduml

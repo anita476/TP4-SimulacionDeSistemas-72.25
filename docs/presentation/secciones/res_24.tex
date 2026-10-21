@@ -1,3 +1,30 @@
+\ifshowvideo
+    \begin{frame}{Animación del sistema}
+      \begin{center}
+        {\small $N=400$}\par\smallskip
+        \includemedia[
+          width=0.60\textheight,
+          height=0.60\textheight,
+          activate=onclick,
+          addresource=anim_N400_small.mp4,
+          flashvars={%
+            source=anim_N400_small.mp4%
+            &autoPlay=false%
+            &loop=true%
+          }
+        ]{\includegraphics[width=0.60\textheight,height=0.50\textheight,keepaspectratio]{anim_N400.png}}{VPlayer.swf}
+      \end{center}
+    \end{frame}
+\else 
+    \begin{frame}[fragile]{Animación del sistema}
+          \begin{center}
+            {\small $N=400$}\par\smallskip
+            \includegraphics[width=\linewidth,height=0.70\textheight,keepaspectratio]{anim_N400.png}
+            \par\smallskip{\scriptsize\url{https://youtu.be/6d-i_nkEles}}
+            \end{center}
+    \end{frame}  
+\fi
+
 \begin{frame}{$\langle t_{90}\rangle$ y $\langle t_{100}\rangle$ en función de la densidad}
   \begin{cols}
     \begin{column}{0.62\textwidth}
