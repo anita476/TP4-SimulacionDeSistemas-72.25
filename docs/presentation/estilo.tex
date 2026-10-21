@@ -84,6 +84,14 @@
   \end{itemize}\end{beamercolorbox}%
 }
 
+\newenvironment{aclaraciones}[1][Aclaraciones]{%
+  \begin{beamercolorbox}[wd=\linewidth,sep=6pt,rounded=true]{block body}%
+  \footnotesize\textbf{#1}\par\vspace{2pt}%
+  \begin{itemize}\setlength{\itemsep}{1pt}%
+}{%
+  \end{itemize}\end{beamercolorbox}%
+}
+
 \providecommand{\animbuild}{0}
 \newif\ifanim
 \ifnum\animbuild=1 \animtrue \else \animfalse \fi
