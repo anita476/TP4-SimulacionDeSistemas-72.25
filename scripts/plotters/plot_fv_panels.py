@@ -132,7 +132,7 @@ def main() -> None:
         curve_v = [xmax * i / 400 for i in range(401)]
         curve_f = [mb_pdf(v, args.m, args.fit) for v in curve_v]
         for ax in axes[:n]:
-            ax.plot(curve_v, curve_f, color="black", linestyle="--", linewidth=1.4, zorder=4, label=rf"$k_B T^* = {args.fit:.3g}\,\mathrm{{J}}$")
+            ax.plot(curve_v, curve_f, color="black", linestyle="--", linewidth=1.4, zorder=4, label=rf"$k_B T^* = {args.fit:.2g}\,\mathrm{{J}}$")
         ymax = max(ymax, max(curve_f))
 
     axes[0].set_xlim(0.0, xmax)

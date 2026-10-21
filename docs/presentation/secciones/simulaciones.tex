@@ -40,8 +40,36 @@
       \begin{itemize}\setlength{\itemsep}{12pt}
         \item Deriva: $\max_t |E(t) - E(0)|/|E(0)|$
         \item $f(v) = N_i/(N\,\Delta v)$, con $v = |\vv{v}|$
-        \item Promedio y desvío estándar muestral
       \end{itemize}
+    \end{column}
+  \end{columns}
+  \vspace{14pt}
+  \small
+  Sobre $M$ realizaciones, para $X = t_{90},\, t_{100},\, F_u(t),\, f(v)$:
+  \[
+    \langle X\rangle = \frac{1}{M}\sum_{k=1}^{M} X^{(k)},
+    \qquad
+    \sigma_X = \sqrt{\frac{1}{M-1}\sum_{k=1}^{M}\big(X^{(k)} - \langle X\rangle\big)^2}
+  \]
+\end{frame}
+
+\begin{frame}{Simulaciones realizadas}
+  \begin{columns}
+    \begin{column}{0.80\textwidth}
+      \centering
+      \small
+      \begin{tabular}{lllll}
+        \hline
+        Punto & $N$ & $x_o$ & Duración & $M$ \\
+        \hline
+        2.1a & $300$ & sin obstáculos & $30\uni{s}$ & $1$ \\
+        2.1b & $10$ a $650$ & $r$ & $30\uni{s}$ & $10$ \\
+        2.2 & $20$ y $100$ & $9$ valores de $r$ a $R - r$ & $100\uni{s}$ & $30$ \\
+        2.3 & $100$ & sin obstáculos & $10\uni{s}$ & $10$ \\
+        2.4a & $10$ a $650$ & $r$ & hasta $N_u = N$ & $10$ \\
+        2.4b & $20$ a $400$ & $9$ valores de $r$ a $R - r$ & hasta $N_u = N$ & $30$ \\
+        \hline
+      \end{tabular}
     \end{column}
   \end{columns}
 \end{frame}

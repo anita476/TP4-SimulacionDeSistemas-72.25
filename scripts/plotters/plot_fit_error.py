@@ -58,7 +58,7 @@ def main() -> None:
         markeredgecolor="black",
         markeredgewidth=0.6,
         zorder=4,
-        label=rf"$k_B T^* = {kbts[i_min]:.4g}\,\mathrm{{J}}$",
+        label=rf"$k_B T^* = {kbts[i_min]:.2g}\,\mathrm{{J}}$",
     )
     if args.reference is not None:
         ax.vlines(

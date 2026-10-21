@@ -2,27 +2,36 @@
 
   \textbf{Ecuación de movimiento partícula $i$}:
   \[
-    m_i\,\ddot{\boldsymbol{r}}_i = \sum_{j\neq i} \boldsymbol{F}_{ij}
+    m_i\,\ddot{\vv{r}}_i = \sum_{j\neq i} \vv{F}_{ij}
   \]
 
   \textbf{Fuerza de contacto partícula $j$ sobre $i$}:
   \[
-    \boldsymbol{F}_{ij} = k\,[\xi_{ij}]_{+}\,\frac{\boldsymbol{r}_{ij}}{|\boldsymbol{r}_{ij}|},
+    \vv{F}_{ij} = k\,[\xi_{ij}]_{+}\,\frac{\vv{r}_{ij}}{|\vv{r}_{ij}|},
     \qquad
-    \xi_{ij} = r_i + r_j - |\boldsymbol{r}_{ij}|
+    \xi_{ij} = r_i + r_j - |\vv{r}_{ij}|
   \]
 
-  \begin{itemize}
-    \item $m_i$: masa partícula $i$
-    \item $k$: constante elástica
-    \item $r_i$: radio partícula $i$
-    \item $\xi_{ij}$: superposición entre $i$ y $j$
-  \end{itemize}
+  \begin{columns}[T]
+    \begin{column}{0.45\textwidth}
+      \begin{itemize}
+        \item $m_i$: masa partícula $i$
+        \item $r_i$: radio partícula $i$
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.45\textwidth}
+      \begin{itemize}
+        \item $k$: constante elástica
+        \item $\xi_{ij}$: superposición entre $i$ y $j$
+      \end{itemize}
+    \end{column}
+  \end{columns}
 
+  \vspace{10pt}
   \textbf{Energía del sistema:}
   \[
-   E_{total} = \sum_{i=1}^{N} \frac{1}{2}\,m_i\,|\boldsymbol{v}_i|^{2}
-    + \sum_{i=1}^{N-1}\sum_{j=i+1}^{N} E^{pot}_{ij} 
-    \qquad E^{pot}_{ij} = \frac{k}{2}\,[\xi_{ij}]_{+}^{2},    
+   E_{total} = \sum_{i=1}^{N} \frac{1}{2}\,m_i\,|\vv{v}_i|^{2}
+    + \sum_{i=1}^{N-1}\sum_{j=i+1}^{N} E^{pot}_{ij}
+    \qquad E^{pot}_{ij} = \frac{k}{2}\,[\xi_{ij}]_{+}^{2},
   \]
 \end{frame}

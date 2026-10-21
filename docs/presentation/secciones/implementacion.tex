@@ -2,10 +2,8 @@
     \centering
     \begin{columns}
         \begin{column}{0.75\textwidth}
-            \begin{figure}
-                \centering
-            \includegraphics[width=1\linewidth]{uml_simple_billiard.png}
-            \end{figure}
+            \centering
+            \includegraphics[width=\linewidth,height=0.82\textheight,keepaspectratio]{uml_simple_billiard.png}
         \end{column}
         \begin{column}{0.25\textwidth}
             \begin{itemize}
@@ -13,4 +11,23 @@
             \end{itemize}
         \end{column}
     \end{columns}
+\end{frame}
+
+\begin{frame}[fragile]{Integración con Verlet}
+  \begin{columns}
+    \begin{column}{0.72\textwidth}
+      \begin{algorithmic}[1]
+        \Require $\vv{r}_i(0),\, \vv{v}_i(0)$, obstáculos, $dt$, $t_f$, $n$
+        \State $\vv{r}_i(-dt) \gets \vv{r}_i - \vv{v}_i\,dt + \frac{dt^2}{2m}\vv{F}_i$
+        \For{$t = 0,\, dt,\, \dots,\, t_f$}
+          \State $\vv{F}_i \gets \sum_j \vv{F}_{ij}$
+          \State frescas con $\xi_{io} > 0$ $\to$ usadas
+          \State $\vv{r}_i(t+dt) \gets 2\vv{r}_i(t) - \vv{r}_i(t-dt) + \frac{dt^2}{m}\vv{F}_i$
+          \State $\vv{v}_i(t) \gets \frac{\vv{r}_i(t+dt) - \vv{r}_i(t-dt)}{2\,dt}$
+          \If{paso múltiplo de $n$} escribir $t,\, \vv{r}_i,\, \vv{v}_i$, estado
+          \EndIf
+        \EndFor
+      \end{algorithmic}
+    \end{column}
+  \end{columns}
 \end{frame}
