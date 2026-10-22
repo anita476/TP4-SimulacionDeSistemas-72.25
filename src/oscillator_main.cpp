@@ -32,8 +32,7 @@ int main(int argc, char *argv[]) {
       "amplitude r(0) (m)");
   program.add_argument("--out")
       .default_value(std::string(""))
-      .help("trajectory 't x_num x_an' (empty = none; also writes "
-            "*_analitica.txt)");
+      .help("trajectory 't x_num x_an'");
 
   try {
     program.parse_args(argc, argv);
@@ -66,6 +65,7 @@ int main(int argc, char *argv[]) {
         throw std::runtime_error("could not open " + out_path);
       file << std::setprecision(17);
 
+      // kinda redundant but its easier to plot analytic curve :p
       trajectory_path.replace_filename(trajectory_path.stem().string() +
                                        "_analitica" +
                                        trajectory_path.extension().string());
