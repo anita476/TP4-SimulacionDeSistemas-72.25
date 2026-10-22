@@ -6,7 +6,7 @@ struct ParticleOscillator {
   double k;     // coef de elasticidad
   // f = m a = -k r - gamma v
 
-  double m; // particle mass (partícula puntual)
+  double m; // particle mass  -> es puntual así que radio 0
   double vx;
   double vx_old;
 

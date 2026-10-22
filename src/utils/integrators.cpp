@@ -91,7 +91,7 @@ void validate(const Oscillator &osc, const OscillatorRun &run) {
   if (!std::isfinite(osc.A))
     throw std::invalid_argument("A must be finite");
   if (!(osc.k / osc.m > osc.gamma * osc.gamma / (4.0 * osc.m * osc.m)))
-    throw std::invalid_argument("overdamped: the underdamped analytic solution "
+    throw std::invalid_argument("overdamped: the analytic solution of slide 36 "
                                 "needs k/m > gamma^2/(4 m^2)");
   if (!std::isfinite(run.dt) || !(run.dt > 0.0))
     throw std::invalid_argument("dt must be finite and > 0");
