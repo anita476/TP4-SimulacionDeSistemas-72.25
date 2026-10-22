@@ -4,9 +4,9 @@
 struct ParticleOscillator {
   double gamma; // coeficiente de amortiguamiento
   double k;     // coef de elasticidad
-  // f = ma = k * r  - gamma *v
+  // f = m a = -k r - gamma v
 
-  double m; // particle mass  -> es puntual así que radio 0
+  double m; // particle mass (partícula puntual)
   double vx;
   double vx_old;
 

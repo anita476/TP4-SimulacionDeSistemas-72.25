@@ -4,7 +4,7 @@ namespace integrators::verlet {
 void oscillator_step(ParticleOscillator &oscillator, double dt) {
   const double dt2 = dt * dt;
   // compute force with : -k * r - gamma * v
-  // velocidad desfasada!! limitación del metodo ..
+  // usa v(t - dt): Verlet original no tiene v(t) hasta calcular r(t + dt)
   double fx =
       -(oscillator.k * oscillator.r) - (oscillator.gamma * oscillator.vx);
 
@@ -129,7 +129,7 @@ void oscillator_step(ParticleOscillator &oscillator, double dt) {
 
   // sin predicción ! uso la v del paso anterior
 
-  // a(t+dt) con r(t+dt) y v predicha
+  // a(t+dt) con r(t+dt) y v(t)
   const double a_new = oscillator_acceleration(oscillator, r_new, v);
 
   // paso intermedio 2: v(t+dt) = v(t+dt/2) + a(t+dt) dt/2

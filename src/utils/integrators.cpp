@@ -20,7 +20,8 @@ Method parse_method(const std::string &name) {
     return Method::VelocityVerletVanilla;
   throw std::invalid_argument(
       "unknown method '" + name +
-      "' (expected euler_pc, verlet, velocity_verlet or beeman)");
+      "' (expected euler_pc, verlet, velocity_verlet, beeman or "
+      "velocity_verlet_vanilla)");
 }
 
 const char *method_name(Method method) {
@@ -90,7 +91,7 @@ void validate(const Oscillator &osc, const OscillatorRun &run) {
   if (!std::isfinite(osc.A))
     throw std::invalid_argument("A must be finite");
   if (!(osc.k / osc.m > osc.gamma * osc.gamma / (4.0 * osc.m * osc.m)))
-    throw std::invalid_argument("overdamped: the analytic solution of slide 37 "
+    throw std::invalid_argument("overdamped: the underdamped analytic solution "
                                 "needs k/m > gamma^2/(4 m^2)");
   if (!std::isfinite(run.dt) || !(run.dt > 0.0))
     throw std::invalid_argument("dt must be finite and > 0");

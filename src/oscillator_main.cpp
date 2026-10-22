@@ -65,7 +65,7 @@ int main(int argc, char *argv[]) {
         throw std::runtime_error("could not open " + out_path);
       file << std::setprecision(17);
 
-      // kinda redundant but its easier to plot analytic curve :p
+      // analytic curve also written on its own file to simplify plotting
       trajectory_path.replace_filename(trajectory_path.stem().string() +
                                        "_analitica" +
                                        trajectory_path.extension().string());
