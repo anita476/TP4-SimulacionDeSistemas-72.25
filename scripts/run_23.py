@@ -9,13 +9,13 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts" / "lib"))
 
 from paths import find_executable
-from speed import bin_edges, fit_kbt, frame_speeds, mean_pdf, mean_v2, nearest_frame, pdf_histogram, sweep_sse
+from speed import bin_edges, frame_speeds, mean_pdf, mean_v2, nearest_frame, pdf_histogram, sweep_sse
 from traj import Traj, read_traj
 from metrics import mean_std
 
 EXE = find_executable(ROOT, "TimeDrivenSimTable")
 DT_FILE = ROOT / "docs" / "results" / "2.1" / "dt.txt"
-FIGS = ROOT / "docs" / "results" / "2.3"
+FIGS = ROOT / "docs" / "results" / "2.3_new"
 WORK = Path(os.environ.get("TEMP", "/tmp")) / "tp4_23_consigna"
 OUT = WORK
 
@@ -226,35 +226,16 @@ def main() -> None:
     print(f"MB 2D: <v>/v0 -> sqrt(pi/4) = {math.sqrt(math.pi / 4):.4g}", flush=True)
 
     t_fit = chosen[-1]
-    stat_speeds: list[float] = []
-    for traj in trajs:
-        stat_speeds.extend(frame_speeds(nearest_frame(traj, t_fit)))
-    centers, means, stds = mean_pdf(
-        [frame_speeds(nearest_frame(traj, t_fit)) for traj in trajs],
-        edges,
-    )
-    # kbt_fit, sse = fit_kbt(M, centers, means)
-    # kbt_v0 = 0.5 * M * V0 * V0
-    # kbt_kin = 0.5 * M * mean_v2(stat_speeds)
-    # (OUT / "fit.txt").write_text(
-    #     (
-    #         f"t_fit {t_fit:.10g}\n"
-    #         f"kBT_fit {kbt_fit:.8g}\n"
-    #         f"kBT_mv02 {kbt_v0:.8g}\n"
-    #         f"kBT_kinetic {kbt_kin:.8g}\n"
-    #         f"sse {sse:.8g}\n"
-    #         f"m {M:.8g}\n"
-    #         f"v0 {V0:.8g}\n"
-    #     ),
-    #     encoding="utf-8",
-    # )
-    # print(
-    #     f"kBT_fit={kbt_fit:.5g}  m v0^2/2={kbt_v0:.5g}  m <v^2>/2={kbt_kin:.5g}  sse={sse:.4g}",
-    #     flush=True,
-    # )
-    
+    stationary_realizations = [
+        frame_speeds(nearest_frame(traj, t_fit)) for traj in trajs
+    ]
+    centers, means, stds = mean_pdf(stationary_realizations, edges)
+
     kbt_v0 = 0.5 * M * V0 * V0
-    kbt_kin = 0.5 * M * mean_v2(stat_speeds)
+    per_seed_kinetic = [
+        0.5 * M * mean_v2(speeds) for speeds in stationary_realizations
+    ]
+    kbt_kin, kbt_kin_std = mean_std(per_seed_kinetic)
     
     kbt_values = [
         kbt_v0 * (1.0 + SWEEP_HALF_RANGE * (i / SWEEP_STEPS_PER_SIDE - 1.0))
@@ -273,8 +254,8 @@ def main() -> None:
     # we can do a numerical check here against the "golden" value that is taken using the aurea function(?)
     
     per_seed: list[float] = []
-    for traj in trajs:
-        seed_centers, seed_density = pdf_histogram(frame_speeds(nearest_frame(traj, t_fit)), edges)
+    for speeds in stationary_realizations:
+        seed_centers, seed_density = pdf_histogram(speeds, edges)
         seed_curve = sweep_sse(M, seed_centers, seed_density, kbt_values)
         per_seed.append(min(seed_curve, key=lambda item: item[1])[0])
         kbt_seed_mean, kbt_seed_std = mean_std(per_seed)
@@ -288,6 +269,7 @@ def main() -> None:
             f"kBT_seed_std {kbt_seed_std:.8g}\n"
             f"kBT_mv02 {kbt_v0:.8g}\n"
             f"kBT_kinetic {kbt_kin:.8g}\n"
+            f"kBT_kinetic_std {kbt_kin_std:.8g}\n"
             f"m {M:.8g}\n"
             f"v0 {V0:.8g}\n"
         ),
@@ -295,7 +277,7 @@ def main() -> None:
     )
     print(
         f"kBT_fit={kbt_fit:.5g} (+-{kbt_seed_std:.2g} over seeds)  m v0^2/2={kbt_v0:.5g}  "
-        f"m <v^2>/2={kbt_kin:.5g}  E_min={sse:.4g}",
+        f"m <v^2>/2={kbt_kin:.5g} (+-{kbt_kin_std:.2g} over seeds)  E_min={sse:.4g}",
         flush=True,
     )
 
